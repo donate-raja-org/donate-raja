@@ -1,0 +1,101 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.jlleitschuh.gradle:ktlint-gradle:12.1.0")
+    }
+}
+
+plugins {
+    application
+    kotlin("jvm") version "1.8.21"
+    kotlin("plugin.spring") version "1.8.21"
+    id("org.springframework.boot") version "3.1.0"
+    id("io.spring.dependency-management") version "1.1.0"
+    id("org.jetbrains.kotlinx.kover") version "0.7.1"
+    id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
+}
+
+group = "com.donateraja"
+version = "0.0.1-SNAPSHOT"
+java.sourceCompatibility = JavaVersion.VERSION_17
+
+repositories {
+    mavenCentral()
+}
+
+tasks.getByName<Jar>("jar") {
+    enabled = true
+}
+
+application {
+    mainClass.set("com.donateraja.ApplicationKt")
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+//    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-logging")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
+    implementation("org.postgresql:postgresql")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.projectlombok:lombok")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.mockito", module = "mockito-core")
+    }
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "17"
+        freeCompilerArgs = listOf("-Xjsr305=strict", "-opt-in=kotlin.time.ExperimentalTime", "-Xjvm-default=all")
+    }
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+kover {
+    useJacoco("0.8.10")
+}
+
+tasks.check {
+    dependsOn(tasks.ktlintCheck)
+}
+
+koverReport {
+    filters {
+        excludes {
+            packages("com.donateraja.domain")
+            packages("com.donateraja.configurations")
+            classes("com.donateraja.repository.*")
+            classes("com.donateraja.*.*\$logger\$1*")
+            classes("com.donateraja.ApplicationKt")
+            classes("com.donateraja.Application")
+        }
+    }
+    defaults {
+        verify {
+            onCheck = true
+            rule {
+                isEnabled = true
+                entity = kotlinx.kover.gradle.plugin.dsl.GroupingEntityType.APPLICATION
+                bound {
+                    minValue = 90
+                    metric = kotlinx.kover.gradle.plugin.dsl.MetricType.LINE
+                    aggregation = kotlinx.kover.gradle.plugin.dsl.AggregationType.COVERED_PERCENTAGE
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+spring:
+  application:
+    name: DonateRaja
+    description: A platform for donations, renting, and receiving items.
+    version: 1.0.0
+  datasource:
+    url: jdbc:postgresql://ep-tiny-forest-a17k2xt8.ap-southeast-1.aws.neon.tech:5432/donateraja
+    username: donateraja_owner
+    password: 9iTbhtqjEkg2
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+#  security:
+#    user:
+#      name: admin
+#      password: "admin@123"
+logging:
+  level:
+    org.springframework: INFO
+    com.donate.raja.donate_raja: DEBUG  # Adjust log level for your classes
+  file:
+    name: logs/app.log  # Log to a specific file
