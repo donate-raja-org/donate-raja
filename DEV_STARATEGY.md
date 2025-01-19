@@ -142,3 +142,63 @@ This document covers:
 - Search functionality for items, transactions, and users.
 
 You can now copy-paste this comprehensive structure. Let me know if there are any further corrections needed.
+
+### **Sample User Flow**
+
+1. **Start**
+    - User visits the platform.
+    - Options to register or log in (email/phone number, Google/Facebook).
+    - User provides necessary credentials.
+    - User successfully logs in and is redirected to the Dashboard.
+
+2. **Dashboard**
+    - User is presented with a dashboard containing the following options:
+        - View their own posts (Donated items, Rentals, etc.).
+        - Post a new item (Donation/Rental).
+        - View all available items (for donation/rental).
+        - Manage account settings.
+
+3. **View All Available Posts**
+    - User can browse all available posts, including:
+        - **Donated Items**
+        - **Rental Items**
+        - **Requested Donations**
+        - **Requested Rentals**
+    - User can filter/search items by category, condition, price, etc.
+
+4. **Manage Own Posts**
+    - User can view and manage their own posts:
+        - **View Own Posts**: All donated, rental, and requested items.
+        - **Update Own Posts**: Modify price, description, condition, and other details.
+        - **Delete Own Posts**: Remove items from the platform.
+
+5. **Send Request for Items**
+    - User can send a request for donated or rental items.
+    - If it’s a rental, the user may also make a payment.
+    - If it’s a donation, the user can request to receive the item.
+
+6. **Post Item (Donation/Rental)**
+    - User posts a new item, including details such as description, price, category, condition, and images.
+    - New post is available for others to view and interact with.
+
+7. **User Post Owner (Post Owner Approval)**
+    - Post owner reviews requests from other users.
+    - **Approve or Reject** requests for donations or rentals.
+    - Notification sent to the requesting user after decision.
+
+8. **Transaction Completion**
+    - **For Rentals**: Payment processed, item marked as rented.
+    - **For Donations**: Item marked as donated to the requesting user.
+
+9. **Post-Transaction (Feedback & Ratings)**
+    - After the transaction completes, both parties can provide feedback or ratings.
+    - User reviews the experience, giving stars or a written review.
+
+---
+
+### **Conclusion**
+This flow illustrates the core user journey for the Donate Raja platform. It covers everything from registration to posting items, making requests, approval process, and feedback collection.
+
+---
+
+Let me know if this is more in line with what you were looking for, or if any further adjustments are needed!
