@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS items (
     user_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    condition VARCHAR(100),
-    category VARCHAR(100),
+    condition_id BIGINT,  -- Condition ID from the conditions table
+    category_id BIGINT,  -- Category ID from the categories table
     image_url VARCHAR(255),
     item_type VARCHAR(50) CHECK (item_type IN ('DONATE', 'DONATE_REQUESTED', 'RENTAL', 'RENTAL_REQUESTED')),
     price_per_day DECIMAL(10, 2), -- Only for rentals
@@ -56,6 +56,27 @@ CREATE TABLE IF NOT EXISTS items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (condition_id) REFERENCES conditions(condition_id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+
+);
+
+-- CREATE ITEM IMAGES TABLE (New Table)
+CREATE TABLE IF NOT EXISTS item_images (
+    image_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each image
+    item_id BIGINT NOT NULL,  -- Item ID to which the image belongs
+    image_url VARCHAR(255) NOT NULL,  -- URL of the image
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Image upload timestamp
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE  -- Foreign key to items table
+);
+
+-- CREATE ITEM TAGS TABLE (New Table)
+CREATE TABLE IF NOT EXISTS item_tags (
+    tag_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each tag
+    item_id BIGINT NOT NULL,  -- Item ID to which the tag belongs
+    tag VARCHAR(100) NOT NULL,  -- Tag associated with the item
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Tag creation timestamp
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE  -- Foreign key to items table
 );
 
 -- CREATE INDEXES FOR ITEMS TABLE
@@ -209,6 +230,18 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_message_sender FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
     CONSTRAINT fk_message_receiver FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- CREATE PAYMENT TRANSACTIONS TABLE
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    payment_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each payment transaction
+    user_id BIGINT NOT NULL,  -- User ID making the payment
+    item_id BIGINT NOT NULL,  -- Item being paid for
+    amount DECIMAL(10, 2) NOT NULL,  -- Amount paid
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Payment date
+    status VARCHAR(50) CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED')),  -- Payment status
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,  -- Foreign key to items table
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE  -- Foreign key to users table
 );
 
 -- ==========================
