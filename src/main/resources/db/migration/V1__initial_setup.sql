@@ -30,6 +30,21 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
+-- CREATE CONDITIONS TABLE
+CREATE TABLE IF NOT EXISTS conditions (
+    condition_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each condition
+    name VARCHAR(100) NOT NULL UNIQUE,   -- Name of the condition (e.g., New, Used, Refurbished)
+    description TEXT                     -- Description of the condition
+);
+
+-- CREATE CATEGORY TABLE
+CREATE TABLE IF NOT EXISTS categories (
+    category_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each category
+    name VARCHAR(100) NOT NULL UNIQUE,  -- Name of the category
+    description TEXT                    -- Description of the category
+);
+
+
 -- CREATE ITEMS TABLE (Merged Donation and Rental Items with unified status)
 CREATE TABLE IF NOT EXISTS items (
     item_id BIGSERIAL PRIMARY KEY,
@@ -55,7 +70,7 @@ CREATE TABLE IF NOT EXISTS items (
     )),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (condition_id) REFERENCES conditions(condition_id) ON DELETE SET NULL,
     FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
 
@@ -83,7 +98,7 @@ CREATE TABLE IF NOT EXISTS item_tags (
 CREATE INDEX IF NOT EXISTS idx_items_user_id ON items(user_id);
 CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
 CREATE INDEX IF NOT EXISTS idx_items_item_type ON items(item_type);
-CREATE INDEX IF NOT EXISTS idx_items_category ON items(category);
+CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id);
 CREATE INDEX IF NOT EXISTS idx_items_available_dates ON items(available_from, available_to); -- Composite index for availability date range
 
 -- CREATE ITEM REVIEWS TABLE

@@ -73,3 +73,8 @@ install [postgres_ide](https://dbeaver.io/download/)
 * username: donateraja_owner
 * password: #######
 
+### Use plugin alternative to githubcopilot as free plugin
+search ub plugins for tabnine 
+[tabnine-ai-chat](https://plugins.jetbrains.com/plugin/12798-tabnine-ai-chat--autocomplete-for-javascript-python--more)
+
+

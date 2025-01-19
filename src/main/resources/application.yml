@@ -36,7 +36,8 @@ spring:
   security:
     user:
       name: admin
-      password: "admin@123"
+#      password: "Admin@123"
+      password: "$2a$10$WJ9y7iQbh3GpFEry4OsUzHJk.y5o/4YOxOB1elH8XyDg.TgYw9bqG"   # Replace with your encoded password
 logging:
   level:
     org.springframework: INFO
