@@ -77,4 +77,14 @@ install [postgres_ide](https://dbeaver.io/download/)
 search ub plugins for tabnine 
 [tabnine-ai-chat](https://plugins.jetbrains.com/plugin/12798-tabnine-ai-chat--autocomplete-for-javascript-python--more)
 
+### Any fly way issues:
+```bash
+./gradlew flywayRepair
 
+```
+
+or 
+
+```
+DELETE FROM flyway_schema_history WHERE version = '1';
+```

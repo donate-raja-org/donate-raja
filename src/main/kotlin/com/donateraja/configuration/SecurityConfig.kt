@@ -2,35 +2,94 @@ package com.donateraja.configuration
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 
-
 @Configuration
-class SecurityConfig ()  {
+@EnableWebSecurity
+@EnableMethodSecurity
+class SecurityConfig(
+    private val jwtDecoder: JwtDecoder
+) {
+//    @Bean
+//    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+//        http
+//            .csrf { it.disable() }
+//            .authorizeHttpRequests { requests ->
+//                requests
+//                    .requestMatchers("/api/auth/**").permitAll()
+//                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+//                    .anyRequest().authenticated()
+//            }
+//            .oauth2ResourceServer { oauth2 ->
+//                oauth2.jwt { jwt ->
+//                    jwt.jwtAuthenticationConverter(jwtAuthConverter())
+//                }
+//            }
+//            .sessionManagement { session ->
+//                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//            }
+//
+//        return http.build()
+//    }
 
-    @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        // Configure security for Swagger UI and OpenAPI access
         http
+            .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui/index.html")  // Swagger UI and docs access
-                    .permitAll()  // Allow public access to these endpoints
-                    .anyRequest()
-                    .authenticated()  // Require authentication for other endpoints
+                    .requestMatchers(
+                        "/api/auth/**",
+                        "/api/users/**",
+                        // Add these Swagger-related endpoints
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/configuration/**",
+                        "/webjars/**"
+                    ).permitAll()
+                    .anyRequest().authenticated()
+            }
+            .oauth2ResourceServer { oauth2 ->
+                oauth2.jwt { jwt ->
+                    jwt.jwtAuthenticationConverter(jwtAuthConverter())
+                }
+            }
+            .sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
 
-        // Instead of disabling HTTP Basic and form login, simply leave them out.
-        // No need for .httpBasic().disable() or .formLogin().disable().
+        return http.build()
+    }
 
-        return http.build() // Return the configured SecurityFilterChain
+    // Add this bean to expose AuthenticationManager
+    @Bean
+    fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager {
+        return authConfig.authenticationManager
+    }
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
+    @Bean
+    fun jwtAuthConverter(): JwtAuthenticationConverter {
+        val converter = JwtAuthenticationConverter()
+        converter.setJwtGrantedAuthoritiesConverter { jwt ->
+            (jwt.claims["roles"] as List<String>).map { SimpleGrantedAuthority(it) }
+        }
+        return converter
     }
 }

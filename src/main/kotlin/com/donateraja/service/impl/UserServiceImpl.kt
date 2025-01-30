@@ -21,7 +21,8 @@ class UserServiceImpl(
         if (userRepository.existsByEmail(userRegistrationDto.email)) {
             throw IllegalArgumentException("User with this email already exists")
         }
-
+//[select u1_0.id from users u1_0 where u1_0.email=? fetch first ? rows only] [ERROR: column u1_0.id does not exist
+//  Position: 8] [n/a]
         // Create new user
         val user = User(
             email = userRegistrationDto.email,

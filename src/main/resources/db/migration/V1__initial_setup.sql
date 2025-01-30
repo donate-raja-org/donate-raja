@@ -26,6 +26,13 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMP                              -- Last login timestamp
 );
 
+--CREATE TABLE user_roles (
+--    user_id BIGINT NOT NULL,
+--    role VARCHAR(50) NOT NULL,
+--    PRIMARY KEY (user_id, role),
+--    FOREIGN KEY (user_id) REFERENCES users(id)
+--);
+
 -- CREATE INDEXES FOR USERS TABLE
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

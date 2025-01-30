@@ -38,6 +38,7 @@ application {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
+//    implementation("org.springdoc:springdoc-openapi-ui:2.0.0")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -51,6 +52,19 @@ dependencies {
 
     implementation("org.flywaydb:flyway-core")
     implementation("org.projectlombok:lombok")
+
+    implementation("com.backblaze.b2:b2-sdk-core:6.3.0")
+    implementation("com.backblaze.b2:b2-sdk-httpclient:6.3.0")
+    // JWT dependencies (JJWT API)
+    implementation("org.springframework.security:spring-security-oauth2-jose")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+
+
+//    implementation("io.jsonwebtoken:jjwt:0.11.5")
+//            implementation("io.jsonwebtoken:jjwt:0.9.1")
+
+
+
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito", module = "mockito-core")

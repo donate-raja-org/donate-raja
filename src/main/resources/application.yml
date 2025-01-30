@@ -36,11 +36,22 @@ spring:
   security:
     user:
       name: admin
-#      password: "Admin@123"
-      password: "$2a$10$WJ9y7iQbh3GpFEry4OsUzHJk.y5o/4YOxOB1elH8XyDg.TgYw9bqG"   # Replace with your encoded password
+      password: "$2a$10$u8TMYYfe26SOwCoflWiv1.2K2o2qDTiaWm0bttFvXL4Kx4/8aC4YW"  # BCrypt encoded passwordlogging:
 logging:
   level:
     org.springframework: INFO
     com.donate.raja.donate_raja: DEBUG  # Adjust log level for your classes
   file:
     name: logs/app.log  # Log to a specific file
+
+
+
+jwt:
+  secret: jh8sNfJsd87fsjFjsdf8sdf72j3s8sd7=  # Replace with your actual secret key
+  expiration: 3600000  # Token expiration time in milliseconds (1 hour)
+
+backblaze:
+  applicationKeyId: your-application-key-id
+  applicationKey: your-application-key
+  bucketId: your-bucket-id
+  publicBaseUrl: https://f001.backblazeb2.com/file/your-bucket-name
