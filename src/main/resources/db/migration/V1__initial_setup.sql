@@ -26,16 +26,20 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMP                              -- Last login timestamp
 );
 
---CREATE TABLE user_roles (
---    user_id BIGINT NOT NULL,
---    role VARCHAR(50) NOT NULL,
---    PRIMARY KEY (user_id, role),
---    FOREIGN KEY (user_id) REFERENCES users(id)
---);
+
+-- CREATE USER ROLES TABLE (unchanged)
+CREATE TABLE user_roles (
+    user_id BIGINT NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    PRIMARY KEY (user_id, role),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 
 -- CREATE INDEXES FOR USERS TABLE
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone_number);
 
 -- CREATE CONDITIONS TABLE
 CREATE TABLE IF NOT EXISTS conditions (

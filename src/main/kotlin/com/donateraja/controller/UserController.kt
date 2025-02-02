@@ -1,13 +1,15 @@
 package com.donateraja.controller
 
-import com.donateraja.model.*
+import com.donateraja.model.user.*
 import com.donateraja.service.UserService
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "User Management", description = "APIs related to User Registration and Authentication")
 class UserController(private val userService: UserService) {
 
     @PostMapping("/register")
