@@ -58,12 +58,9 @@ dependencies {
     // JWT dependencies (JJWT API)
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("com.nimbusds:nimbus-jose-jwt:9.1.2")
 
-
-//    implementation("io.jsonwebtoken:jjwt:0.11.5")
-//            implementation("io.jsonwebtoken:jjwt:0.9.1")
-
-
+    implementation("org.springframework.boot:spring-boot-configuration-processor")
 
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {

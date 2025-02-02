@@ -1,6 +1,6 @@
 package com.donateraja.service
 
-import com.donateraja.entity.Item
+import com.donateraja.entity.item.Item
 import java.util.*
 
 interface ItemService {

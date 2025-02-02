@@ -13,9 +13,6 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(100),                             -- First name of the user
     last_name VARCHAR(100),                              -- Last name of the user
     profile_picture TEXT,                                -- URL or path to profile picture
-    address TEXT,                                        -- Full address of the user
-    pin_code VARCHAR(20),                                -- ZIP or postal code
-    role VARCHAR(20) DEFAULT 'USER',                     -- Role for user access levels (e.g., USER, ADMIN)
     status VARCHAR(20) DEFAULT 'ACTIVE',                 -- Account status (ACTIVE, INACTIVE, BLOCKED)
     is_email_verified BOOLEAN DEFAULT FALSE,             -- Whether email is verified
     is_phone_verified BOOLEAN DEFAULT FALSE,             -- Whether phone number is verified
@@ -26,13 +23,26 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMP                              -- Last login timestamp
 );
 
+-- CREATE ADDRESSES TABLE
+CREATE TABLE IF NOT EXISTS addresses (
+    address_id BIGSERIAL PRIMARY KEY,                   -- Unique ID for each address
+    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
+    street VARCHAR(255) NOT NULL,                        -- Street address
+    city VARCHAR(100) NOT NULL,                          -- City
+    state VARCHAR(100) NOT NULL,                         -- State
+    pincode VARCHAR(20) NOT NULL,                       -- ZIP or postal code
+    country VARCHAR(100),                                -- Optional country field
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- When the address was created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- Last update timestamp
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE    -- Relate to the users table
+);
 
--- CREATE USER ROLES TABLE (unchanged)
+-- CREATE USER ROLES TABLE
 CREATE TABLE user_roles (
-    user_id BIGINT NOT NULL,
-    role VARCHAR(50) NOT NULL,
-    PRIMARY KEY (user_id, role),
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
+    role VARCHAR(50) NOT NULL,                            -- Role name (e.g., USER, ADMIN)
+    PRIMARY KEY (user_id, role),                         -- Composite primary key
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
 );
 
 

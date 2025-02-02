@@ -1,6 +1,7 @@
-package com.donateraja.entity
+package com.donateraja.entity.user
 
 import com.donateraja.entity.constants.Role
+import com.donateraja.entity.constants.Status
 import jakarta.persistence.*
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotNull
@@ -8,37 +9,40 @@ import jakarta.validation.constraints.Size
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "users")
 data class User(
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", nullable = false, updatable = false)
     val id: Long = 0,
 
     @Column(unique = true, nullable = false)
-    @field:Email(message = "Email should be valid")
-    @field:NotNull(message = "Email cannot be null")
+    @Email(message = "Email should be valid")
+    @NotNull(message = "Email cannot be null")
     var email: String,
 
     @Column(nullable = false)
-    @field:Size(min = 8, message = "Password must be at least 8 characters long")
-    @field:NotNull(message = "Password cannot be null")
+    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @NotNull(message = "Password cannot be null")
     @get:JvmName("getUserPassword") // Renamed JVM getter
     var password: String,
 
     @Column(unique = true, nullable = false)
-    @field:Size(min = 3, message = "Username must be at least 3 characters long")
-    @field:NotNull(message = "Username cannot be null")
+    @Size(min = 3, message = "Username must be at least 3 characters long")
+    @NotNull(message = "Username cannot be null")
     @get:JvmName("getUserUsername") // Renamed JVM getter
     var username: String,
 
     @Column(name = "first_name")
-    @field:NotNull(message = "First name cannot be null")
+    @NotNull(message = "First name cannot be null")
     var firstName: String,
 
     @Column(name = "last_name")
-    @field:NotNull(message = "Last name cannot be null")
+    @NotNull(message = "Last name cannot be null")
     var lastName: String,
 
     @Column(name = "phone_number")
@@ -47,11 +51,10 @@ data class User(
     @Column(name = "profile_picture")
     var profilePicture: String? = null,
 
-    @Column
-    var address: String? = null,
 
-    @Column(name = "pin_code")
-    var pinCode: String? = null,
+
+//    @Column(name = "pincode")
+//    var pincode: String? = null,
 
     @ElementCollection(targetClass = Role::class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
@@ -59,22 +62,38 @@ data class User(
     @Column(name = "role")
     var roles: Set<Role> = setOf(Role.ROLE_USER),
 
+    @Enumerated(EnumType.STRING)
     @Column
-    var status: String = "ACTIVE",
+    var status: Status = Status.ACTIVE, // Use enum instead of string for status
 
     @Column(name = "is_email_verified")
     var isEmailVerified: Boolean = false,
 
     @Column(name = "is_phone_verified")
-    var isPhoneVerified: Boolean = false
+    var isPhoneVerified: Boolean = false,
+
+    @Column(name = "verification_code")
+    var verificationCode: String? = null,
+
+    @Column(name = "verification_expires")
+    var verificationExpires: LocalDateTime? = null,
+
+    @Column(name = "created_at", updatable = false)
+    var createdAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "updated_at")
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
+
+    @Column(name = "last_login_at")
+    var lastLoginAt: LocalDateTime? = null
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> {
         return roles.map { SimpleGrantedAuthority(it.name) }
     }
 
-    override fun getPassword(): String = password // Override UserDetails method
+    override fun getPassword(): String = password
 
-    override fun getUsername(): String = username // Override UserDetails method
+    override fun getUsername(): String = username
 
     override fun isAccountNonExpired(): Boolean = true
 
@@ -82,5 +101,5 @@ data class User(
 
     override fun isCredentialsNonExpired(): Boolean = true
 
-    override fun isEnabled(): Boolean = status == "ACTIVE"
+    override fun isEnabled(): Boolean = status == Status.ACTIVE
 }

@@ -1,5 +1,7 @@
 package com.donateraja.controller
 
+import com.donateraja.annotation.ApiOperationWithCustomResponses
+import com.donateraja.common.exception.ServiceException
 import com.donateraja.model.user.*
 import com.donateraja.service.UserService
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -13,30 +15,40 @@ import org.springframework.web.bind.annotation.*
 class UserController(private val userService: UserService) {
 
     @PostMapping("/register")
+    @Throws(ServiceException::class)
+    @ApiOperationWithCustomResponses(
+        summary = "User Registration",
+        description = "Registers a new user with the provided details. Returns user information upon successful registration.",
+        successSchema = UserRegistrationDto::class,
+    )
     fun registerUser(@RequestBody userRegistrationDto: UserRegistrationDto): ResponseEntity<Any> {
         val registeredUser = userService.registerUser(userRegistrationDto)
         return ResponseEntity(registeredUser, HttpStatus.CREATED)
     }
 
     @PostMapping("/login")
+    @Throws(ServiceException::class)
     fun loginUser(@RequestBody userLoginDto: UserLoginDto): ResponseEntity<Any> {
         val loginResponse = userService.loginUser(userLoginDto)
         return ResponseEntity(loginResponse, HttpStatus.OK)
     }
 
     @PostMapping("/logout")
+    @Throws(ServiceException::class)
     fun logoutUser(): ResponseEntity<Any> {
         userService.logoutUser()
         return ResponseEntity(HttpStatus.OK)
     }
 
     @GetMapping("/{userId}")
+    @Throws(ServiceException::class)
     fun getUserProfile(@PathVariable userId: Long): ResponseEntity<UserProfileDto> {
         val userProfile = userService.getUserProfile(userId)
         return ResponseEntity(userProfile, HttpStatus.OK)
     }
 
     @PutMapping("/{userId}")
+    @Throws(ServiceException::class)
     fun updateUserProfile(@PathVariable userId: Long, @RequestBody userProfileDto: UserProfileDto): ResponseEntity<UserProfileDto> {
         val updatedProfile = userService.updateUserProfile(userId, userProfileDto)
         return ResponseEntity(updatedProfile, HttpStatus.OK)

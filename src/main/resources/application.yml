@@ -32,11 +32,18 @@ spring:
     show-sql: true
     properties:
       hibernate:
+        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
   security:
+    jwt:
+      base64-signing-key: "mXh0/Uotn5+BBVcIzhSxInXDVMXfp7zZPJiXu92WHrA="
+      issuer: "donateraja.com"
+      access-token-expiration: 1h
+      refresh-token-expiration: 7d
     user:
       name: admin
       password: "$2a$10$u8TMYYfe26SOwCoflWiv1.2K2o2qDTiaWm0bttFvXL4Kx4/8aC4YW"  # BCrypt encoded passwordlogging:
+
 logging:
   level:
     org.springframework: INFO
@@ -47,8 +54,10 @@ logging:
 
 
 jwt:
-  secret: jh8sNfJsd87fsjFjsdf8sdf72j3s8sd7=  # Replace with your actual secret key
+  secret: "pVLNJbuvCo5tAb/UjHjdbRz+MtNbEfEDS7iuEAtM+IY="  # openssl rand -base64 32
   expiration: 3600000  # Token expiration time in milliseconds (1 hour)
+
+
 
 backblaze:
   applicationKeyId: your-application-key-id

@@ -1,8 +1,9 @@
-package com.donateraja.entity
+package com.donateraja.entity.item
 
 import com.donateraja.entity.constants.Category
 import com.donateraja.entity.constants.Condition
 import com.donateraja.entity.constants.DonationOrRent
+import com.donateraja.entity.user.User
 import jakarta.persistence.*
 
 @Entity
@@ -33,7 +34,9 @@ data class Item(
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     var user: User // User who created the listing
-)
+){
+
+}
 
 
 

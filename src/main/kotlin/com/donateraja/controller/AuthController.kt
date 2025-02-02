@@ -1,52 +1,47 @@
 package com.donateraja.controller
 
-import org.springframework.beans.factory.annotation.Value
+import com.donateraja.model.user.UserRegistrationDto
+import com.donateraja.service.AuthService
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.oauth2.jwt.JwtClaimsSet
-import org.springframework.security.oauth2.jwt.JwtEncoder
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import java.time.Instant
+import org.springframework.web.bind.annotation.*
+
 
 @RestController
-@RequestMapping("/api/auth")
-class AuthController(
-    private val authenticationManager: AuthenticationManager,
-    private val userDetailsService: UserDetailsService,
-    private val jwtEncoder: JwtEncoder,
-    @Value("\${jwt.expiration}") private val expiration: Long
-) {
-    @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
-        authenticationManager.authenticate(
-            UsernamePasswordAuthenticationToken(request.username, request.password)
-        )
+@RequestMapping("/auth")
+class AuthController(private val authService: AuthService) {
 
-        val userDetails = userDetailsService.loadUserByUsername(request.username)
-        val token = generateToken(userDetails)
-
-        return ResponseEntity.ok(AuthResponse(token))
+    @PostMapping("/register")
+    fun register(@RequestBody @Valid userRegistrationDto: UserRegistrationDto): ResponseEntity<String> {
+        return try {
+            val token = authService.registerUser(userRegistrationDto)
+            ResponseEntity.ok("User registered successfully. Token: $token")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(e.message ?: "Registration failed")
+        }
     }
 
-    private fun generateToken(userDetails: UserDetails): String {
-        val claims = JwtClaimsSet.builder()
-            .issuer("donate-raja")
-            .subject(userDetails.username)
-            .claim("roles", userDetails.authorities.map { it.authority })
-            .issuedAt(Instant.now())
-            .expiresAt(Instant.now().plusMillis(expiration))
-            .build()
+    @PostMapping("/login")
+    fun login(@RequestParam email: String, @RequestParam password: String): ResponseEntity<String> {
+        return try {
+            val token = authService.loginUser(email, password)
+            ResponseEntity.ok("Login successful. Token: $token")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(e.message ?: "Login failed")
+        }
+    }
 
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
+
+    @GetMapping("/validate-token")
+    fun validateToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<String> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        return try {
+            val decodedToken = authService.validateToken(token)
+            // You can also check the validity and expiration here
+            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
+        }
     }
 }
-
-data class LoginRequest(val username: String, val password: String)
-data class AuthResponse(val token: String)

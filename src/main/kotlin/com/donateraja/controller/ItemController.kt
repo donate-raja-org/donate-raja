@@ -1,6 +1,6 @@
 package com.donateraja.controller
 
-import com.donateraja.entity.Item
+import com.donateraja.entity.item.Item
 import com.donateraja.service.ItemService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

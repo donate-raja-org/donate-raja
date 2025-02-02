@@ -1,8 +1,8 @@
 package com.donateraja.service.impl
 
 
-import com.donateraja.entity.User
-import com.donateraja.model.*
+import com.donateraja.entity.user.User
+import com.donateraja.model.user.*
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.UserService
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -34,7 +34,7 @@ class UserServiceImpl(
         )
 
         val savedUser = userRepository.save(user)
-        
+
         // Return user details (excluding sensitive information)
         return UserProfileDto(
             id = savedUser.id,
@@ -50,9 +50,9 @@ class UserServiceImpl(
         val user = userRepository.findByEmail(userLoginDto.email)
             ?: throw IllegalArgumentException("User not found")
 
-        if (!passwordEncoder.matches(userLoginDto.password, user.password)) {
-            throw IllegalArgumentException("Invalid password")
-        }
+//        if (!passwordEncoder.matches(userLoginDto.password, user.password)) {
+//            throw IllegalArgumentException("Invalid password")
+//        }
 
         // Here you would typically generate and return a JWT token
         // For simplicity, we're just returning a success message
@@ -78,12 +78,12 @@ class UserServiceImpl(
     @Transactional
     override fun updateUserProfile(userId: Long, userProfileDto: UserProfileDto): UserProfileDto {
         val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        
-        user.apply {
-            firstName = userProfileDto.firstName
-            lastName = userProfileDto.lastName
-            phoneNumber = userProfileDto.phoneNumber
-        }
+
+//        user.apply {
+//            firstName = userProfileDto.firstName
+//            lastName = userProfileDto.lastName
+//            phoneNumber = userProfileDto.phoneNumber
+//        }
 
         val updatedUser = userRepository.save(user)
         return UserProfileDto(
@@ -104,7 +104,7 @@ class UserServiceImpl(
             throw IllegalArgumentException("Current password is incorrect")
         }
 
-        user.password = passwordEncoder.encode(changePasswordDto.newPassword)
+//        user.password = passwordEncoder.encode(changePasswordDto.newPassword)
         userRepository.save(user)
     }
 

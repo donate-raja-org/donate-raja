@@ -1,7 +1,6 @@
 package com.donateraja.service
 
-import com.donateraja.model.*
-
+import com.donateraja.model.user.*
 
 interface UserService {
     fun registerUser(userRegistrationDto: UserRegistrationDto): Any

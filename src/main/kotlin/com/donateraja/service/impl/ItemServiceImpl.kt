@@ -1,6 +1,6 @@
 package com.donateraja.service.impl
 
-import com.donateraja.entity.Item
+import com.donateraja.entity.item.Item
 import com.donateraja.repository.ItemRepository
 import com.donateraja.service.ItemService
 import org.springframework.stereotype.Service
