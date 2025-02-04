@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import org.springframework.core.annotation.AliasFor
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FUNCTION)
@@ -64,7 +65,10 @@ import kotlin.reflect.KClass
     ]
 )
 annotation class ApiOperationWithCustomResponses(
+    @get:AliasFor(annotation = Operation::class, attribute = "summary")
     val summary: String,
+
+    @get:AliasFor(annotation = Operation::class, attribute = "description")
     val description: String,
     val successSchema: KClass<*> = Any::class,  // Only for 200 response
     val responseExamples: Array<ExampleObject> = []  // Custom examples for each response

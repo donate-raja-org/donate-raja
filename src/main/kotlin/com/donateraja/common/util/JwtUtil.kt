@@ -29,7 +29,7 @@ class JwtUtil(
     fun generateRefreshToken(authentication: Authentication): String {
         return buildToken(
             subject = authentication.name,
-            authorities = emptySet(),
+            authorities = emptySet(),  // Refresh tokens usually don't carry roles
             expiration = parseDuration(jwtTokenConfig.refreshTokenExpiration)
         )
     }
@@ -44,7 +44,7 @@ class JwtUtil(
             .subject(subject)
             .issuedAt(Instant.now())
             .expiresAt(Instant.now().plus(expiration))
-            .claim("roles", authorities.map { it.authority })
+            .claim("roles", authorities.map { it.authority })  // Ensure this claim is consistent
             .build()
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
