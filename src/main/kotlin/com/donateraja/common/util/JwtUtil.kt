@@ -1,12 +1,11 @@
 package com.donateraja.common.util
 
+import com.donateraja.common.exception.ServiceException
 import com.donateraja.configuration.JwtTokenConfig
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.oauth2.jwt.JwtClaimsSet
-import org.springframework.security.oauth2.jwt.JwtDecoder
-import org.springframework.security.oauth2.jwt.JwtEncoder
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters
+import org.springframework.security.oauth2.jwt.*
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.time.Instant
@@ -39,15 +38,25 @@ class JwtUtil(
         authorities: Collection<GrantedAuthority>,
         expiration: Duration
     ): String {
+
+        val roles = if (authorities.isEmpty()) listOf("ROLE_USER") else authorities.map { it.authority }
         val claims = JwtClaimsSet.builder()
             .issuer(jwtTokenConfig.issuer)
             .subject(subject)
             .issuedAt(Instant.now())
             .expiresAt(Instant.now().plus(expiration))
-            .claim("roles", authorities.map { it.authority })  // Ensure this claim is consistent
+            .claim("roles", roles)  // Ensure this claim is consistent
             .build()
+        try {
+            val token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
+            return token
+        } catch (ex: JwtEncodingException) {
+            println("Error encoding JWT: ${ex.message}")
+            ex.printStackTrace()
+            throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR,"token gen error ") // Rethrow if you need to propagate the error
+        }
 
-        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
+//        return jwtEncoder.encode(JwtEncoderParameters.from(claims)).tokenValue
     }
 
     // Parse expiration string (e.g., "1h", "2d", etc.) to Duration
@@ -69,7 +78,7 @@ class JwtUtil(
     }
 
     // Decode JWT token for validation or extraction of claims
-    fun decodeJwt(token: String): Map<String, Any> {
+    fun validateToken(token: String): Map<String, Any> {
         val jwt = jwtDecoder.decode(token)
         return jwt.claims
     }

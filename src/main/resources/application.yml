@@ -41,9 +41,10 @@ spring:
       issuer: "donateraja.com"
       access-token-expiration: 1h
       refresh-token-expiration: 7d
-    user:
-      name: admin
-      password: "$2a$10$u8TMYYfe26SOwCoflWiv1.2K2o2qDTiaWm0bttFvXL4Kx4/8aC4YW"  # BCrypt encoded passwordlogging:
+
+#    user:
+#      name: admin
+#      password: "$2a$10$u8TMYYfe26SOwCoflWiv1.2K2o2qDTiaWm0bttFvXL4Kx4/8aC4YW"  # BCrypt encoded passwordlogging:
 
 logging:
   level:
@@ -54,9 +55,9 @@ logging:
 
 
 
-jwt:
-  secret: "pVLNJbuvCo5tAb/UjHjdbRz+MtNbEfEDS7iuEAtM+IY="  # openssl rand -base64 32
-  expiration: 3600000  # Token expiration time in milliseconds (1 hour)
+#jwt:
+#  secret: "pVLNJbuvCo5tAb/UjHjdbRz+MtNbEfEDS7iuEAtM+IY="  # openssl rand -base64 32
+#  expiration: 3600000  # Token expiration time in milliseconds (1 hour)
 
 
 

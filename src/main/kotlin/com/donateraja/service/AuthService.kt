@@ -72,6 +72,6 @@ class AuthService(
     }
 
     fun validateToken(token: String): Map<String, Any> {
-        return jwtUtil.decodeJwt(token)
+        return jwtUtil.validateToken(token)
     }
 }
