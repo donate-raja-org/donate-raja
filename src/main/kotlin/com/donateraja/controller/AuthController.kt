@@ -32,16 +32,34 @@ class AuthController(private val authService: AuthService) {
     }
 
 
-    @GetMapping("/validate-token")
-    fun validateToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<String> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+//    @GetMapping("/validate-token")
+//    fun validateToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<String> {
+//        val token = authHeader.removePrefix("Bearer ").trim()
+//
+//        return try {
+//            val decodedToken = authService.validateToken(token)
+//            // You can also check the validity and expiration here
+//            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
+//        } catch (e: Exception) {
+//            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
+//        }
+//    }
 
-        return try {
-            val decodedToken = authService.validateToken(token)
-            // You can also check the validity and expiration here
-            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
-        } catch (e: Exception) {
-            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
-        }
-    }
+//    @GetMapping("/validate-token")
+//    fun validateToken(@RequestHeader("Authorization") authorization: String?): ResponseEntity<String> {
+//            if (authorization.isNullOrEmpty()) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                .body("Authorization header is missing.")
+//        }
+//
+//        val token = authorization.removePrefix("Bearer ").trim()
+//
+//        return try {
+//            val decodedToken = authService.validateToken(token)
+//            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
+//        } catch (e: Exception) {
+//            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
+//        }
+//    }
+
 }
