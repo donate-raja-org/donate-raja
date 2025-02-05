@@ -2,6 +2,7 @@ package com.donateraja.service
 
 import com.donateraja.common.exception.ServiceException
 import com.donateraja.common.util.JwtUtil
+import com.donateraja.entity.user.Address
 import com.donateraja.entity.user.User
 import com.donateraja.model.user.UserRegistrationDto
 import com.donateraja.repository.AddressRepository
@@ -29,9 +30,9 @@ class AuthService(
     @Throws(ServiceException::class)
     fun registerUser(userRegistrationDto: UserRegistrationDto): String {
         // Uncomment and add validation for existing email if needed
-        // if (userRepository.existsByEmail(userRegistrationDto.email)) {
-        //     throw IllegalArgumentException("User with email ${userRegistrationDto.email} already exists")
-        // }
+         if (userRepository.existsByEmail(userRegistrationDto.email)) {
+             throw IllegalArgumentException("User with email ${userRegistrationDto.email} already exists")
+         }
 
         val user = User(
             email = userRegistrationDto.email,
@@ -43,11 +44,11 @@ class AuthService(
         )
 
         // Save user (uncomment if needed)
-        // val savedUser = userRepository.save(user)
+         val savedUser = userRepository.save(user)
 
         // Add address if needed (uncomment and modify if needed)
-        // val address = Address(user = savedUser, pincode = userRegistrationDto.pincode)
-        // addressRepository.save(address)
+         val address = Address(user = savedUser, pincode = userRegistrationDto.pincode)
+         addressRepository.save(address)
 
         // Manually create authentication object for generating JWT
         val authentication = UsernamePasswordAuthenticationToken(user.username, user.password)
