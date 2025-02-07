@@ -1,13 +1,23 @@
 package com.donateraja.controller
 
-import com.donateraja.annotation.ApiOperationWithCustomResponses
+import ApiOperationWithCustomResponses
 import com.donateraja.common.exception.ServiceException
-import com.donateraja.model.user.*
+import com.donateraja.model.user.ChangePasswordDto
+import com.donateraja.model.user.ResetPasswordDto
+import com.donateraja.model.user.UserLoginDto
+import com.donateraja.model.user.UserProfileDto
+import com.donateraja.model.user.UserRegistrationDto
 import com.donateraja.service.UserService
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/users")
@@ -18,8 +28,9 @@ class UserController(private val userService: UserService) {
     @Throws(ServiceException::class)
     @ApiOperationWithCustomResponses(
         summary = "User Registration",
-        description = "Registers a new user with the provided details. Returns user information upon successful registration.",
-        successSchema = UserRegistrationDto::class,
+        description = "Registers a new user with the provided details. Returns user information upon successful " +
+            "registration.",
+        successSchema = UserRegistrationDto::class
     )
     fun registerUser(@RequestBody userRegistrationDto: UserRegistrationDto): ResponseEntity<Any> {
         val registeredUser = userService.registerUser(userRegistrationDto)
@@ -49,7 +60,10 @@ class UserController(private val userService: UserService) {
 
     @PutMapping("/{userId}")
     @Throws(ServiceException::class)
-    fun updateUserProfile(@PathVariable userId: Long, @RequestBody userProfileDto: UserProfileDto): ResponseEntity<UserProfileDto> {
+    fun updateUserProfile(
+        @PathVariable userId: Long,
+        @RequestBody userProfileDto: UserProfileDto
+    ): ResponseEntity<UserProfileDto> {
         val updatedProfile = userService.updateUserProfile(userId, userProfileDto)
         return ResponseEntity(updatedProfile, HttpStatus.OK)
     }

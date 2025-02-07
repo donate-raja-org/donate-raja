@@ -1,8 +1,11 @@
 package com.donateraja.service.impl
 
-
 import com.donateraja.entity.user.User
-import com.donateraja.model.user.*
+import com.donateraja.model.user.ChangePasswordDto
+import com.donateraja.model.user.ResetPasswordDto
+import com.donateraja.model.user.UserLoginDto
+import com.donateraja.model.user.UserProfileDto
+import com.donateraja.model.user.UserRegistrationDto
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.UserService
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -10,10 +13,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class UserServiceImpl(
-    private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
-) : UserService {
+class UserServiceImpl(private val userRepository: UserRepository, private val passwordEncoder: PasswordEncoder) :
+    UserService {
 
     @Transactional
     override fun registerUser(userRegistrationDto: UserRegistrationDto): Any {
@@ -21,7 +22,7 @@ class UserServiceImpl(
         if (userRepository.existsByEmail(userRegistrationDto.email)) {
             throw IllegalArgumentException("User with this email already exists")
         }
-//[select u1_0.id from users u1_0 where u1_0.email=? fetch first ? rows only] [ERROR: column u1_0.id does not exist
+// [select u1_0.id from users u1_0 where u1_0.email=? fetch first ? rows only] [ERROR: column u1_0.id does not exist
 //  Position: 8] [n/a]
         // Create new user
         val user = User(
@@ -50,9 +51,9 @@ class UserServiceImpl(
         val user = userRepository.findByEmail(userLoginDto.email)
             ?: throw IllegalArgumentException("User not found")
 
-//        if (!passwordEncoder.matches(userLoginDto.password, user.password)) {
-//            throw IllegalArgumentException("Invalid password")
-//        }
+        if (!passwordEncoder.matches(userLoginDto.password, user.password)) {
+            throw IllegalArgumentException("Invalid password")
+        }
 
         // Here you would typically generate and return a JWT token
         // For simplicity, we're just returning a success message
@@ -79,11 +80,11 @@ class UserServiceImpl(
     override fun updateUserProfile(userId: Long, userProfileDto: UserProfileDto): UserProfileDto {
         val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
 
-//        user.apply {
-//            firstName = userProfileDto.firstName
-//            lastName = userProfileDto.lastName
-//            phoneNumber = userProfileDto.phoneNumber
-//        }
+        user.apply {
+            firstName = userProfileDto.firstName
+            lastName = userProfileDto.lastName
+            phoneNumber = userProfileDto.phoneNumber
+        }
 
         val updatedUser = userRepository.save(user)
         return UserProfileDto(

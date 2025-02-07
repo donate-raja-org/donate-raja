@@ -20,7 +20,7 @@ class ServiceExceptionHandler {
     private val logger = KotlinLogging.logger {}
 
     // Handle ServiceException (custom exception)
-    @ExceptionHandler(value=[ServiceException::class])
+    @ExceptionHandler(value = [ServiceException::class])
     fun handleServiceException(serviceException: ServiceException): ResponseEntity<Any> {
         logger.error("Error occurred: ${serviceException.error}")
         // Log the transaction ID for tracing
@@ -28,20 +28,20 @@ class ServiceExceptionHandler {
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-
-    @ExceptionHandler(value= [Exception::class])
+    @ExceptionHandler(value = [Exception::class])
     fun handleException(exception: Exception): ResponseEntity<Any> {
         logger.error(exception.message)
-        if (Objects.nonNull(exception.stackTrace)){
-            for (element in exception.stackTrace){
-                if (Objects.nonNull(element)){
+        if (Objects.nonNull(exception.stackTrace)) {
+            for (element in exception.stackTrace) {
+                if (Objects.nonNull(element)) {
                     logger.error(element.toString())
                 }
             }
         }
-        val serviceException = ServiceException(HttpStatus.INTERNAL_SERVER_ERROR,exception.message)
+        val serviceException = ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
+
     // Handle MethodArgumentNotValidException (Invalid request body)
     @ExceptionHandler(value = [MethodArgumentNotValidException::class])
     fun handleMethodArgumentNotValidException(exception: MethodArgumentNotValidException): ResponseEntity<Any> {
@@ -81,7 +81,8 @@ class ServiceExceptionHandler {
         val fieldErrors: MutableList<String> = ArrayList()
         exception.constraintViolations.forEach(
             Consumer {
-                error : ConstraintViolation<*> ->fieldErrors.add(error.message)
+                    error: ConstraintViolation<*> ->
+                fieldErrors.add(error.message)
             }
         )
         val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
@@ -94,7 +95,4 @@ class ServiceExceptionHandler {
         val serviceException = ServiceException(HttpStatus.FORBIDDEN, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
-
 }
-
-

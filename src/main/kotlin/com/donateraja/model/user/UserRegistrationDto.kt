@@ -36,6 +36,6 @@ data class UserRegistrationDto(
     val lastName: String,
 
     @JsonProperty("pincode")
-    @Pattern(regexp = "^[1-9][0-9]{5}$", message = "Invalid pincode format") // Assuming 6-digit format
+    @Pattern(regexp = "^[1-9][0-9]{5}$", message = "Invalid pincode format")
     val pincode: String
 )

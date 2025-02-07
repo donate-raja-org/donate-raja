@@ -12,13 +12,13 @@ class ServiceError {
     @JsonProperty("errorCode")
     var errorCode: Int? = null
 
-    @Schema(example="Error message")
+    @Schema(example = "Error message")
     var message: String? = null
 
-    @Schema(example="Error description")
+    @Schema(example = "Error description")
     var description: String? = null
 
-    @Schema(example="transaction id to identify the request")
+    @Schema(example = "transaction id to identify the request")
     @JsonProperty("transactionId")
     var transactionId: String? = null
 
@@ -39,8 +39,6 @@ class ServiceError {
         this.timestampInMillis = LocalDateTime.now(ZoneOffset.UTC)
     }
 
-
-    // Override the toString method using Jackson's ObjectMapper to pretty print
     override fun toString(): String {
         val jackson = ObjectMapper().findAndRegisterModules()
         return jackson.writerWithDefaultPrettyPrinter().writeValueAsString(this)

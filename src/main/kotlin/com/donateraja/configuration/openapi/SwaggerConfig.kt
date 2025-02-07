@@ -33,7 +33,8 @@ class SwaggerConfig {
             .addSecurityItem(SecurityRequirement().addList("bearerAuth"))
             .components(
                 Components().addSecuritySchemes(
-                    "bearerAuth", SecurityScheme()
+                    "bearerAuth",
+                    SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT")

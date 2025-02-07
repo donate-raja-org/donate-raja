@@ -5,7 +5,8 @@ import org.slf4j.MDC
 import org.springframework.http.HttpStatus
 
 class ServiceException(
-    val httpStatus: HttpStatus, description: String?
+    val httpStatus: HttpStatus,
+    description: String?
 ) : Exception(httpStatus.name) {
     val error: ServiceError = ServiceError(
         httpStatus.value(),

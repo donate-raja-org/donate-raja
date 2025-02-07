@@ -4,7 +4,15 @@ import com.donateraja.entity.item.Item
 import com.donateraja.service.ItemService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/items")
@@ -12,13 +20,11 @@ class ItemController(private val itemService: ItemService) {
 
     // 1. Create a new item listing
     @PostMapping
-    fun createItem(@RequestBody item: Item): ResponseEntity<Item> {
-        return try {
-            val createdItem = itemService.createItem(item)
-            ResponseEntity(createdItem, HttpStatus.CREATED)
-        } catch (e: Exception) {
-            ResponseEntity(null, HttpStatus.BAD_REQUEST)
-        }
+    fun createItem(@RequestBody item: Item): ResponseEntity<Item> = try {
+        val createdItem = itemService.createItem(item)
+        ResponseEntity(createdItem, HttpStatus.CREATED)
+    } catch (e: Exception) {
+        ResponseEntity(null, HttpStatus.BAD_REQUEST)
     }
 
     // 2. Get all item listings (with optional filters)
@@ -54,14 +60,15 @@ class ItemController(private val itemService: ItemService) {
 
     // 5. Delete item listing
     @DeleteMapping("/{itemId}")
-    fun deleteItem(@PathVariable itemId: Long): ResponseEntity<HttpStatus> {
-        return try {
-            val isDeleted = itemService.deleteItem(itemId)
-            if (isDeleted) ResponseEntity(HttpStatus.NO_CONTENT)
-            else ResponseEntity(HttpStatus.NOT_FOUND)
-        } catch (e: Exception) {
-            ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun deleteItem(@PathVariable itemId: Long): ResponseEntity<HttpStatus> = try {
+        val isDeleted = itemService.deleteItem(itemId)
+        if (isDeleted) {
+            ResponseEntity(HttpStatus.NO_CONTENT)
+        } else {
+            ResponseEntity(HttpStatus.NOT_FOUND)
         }
+    } catch (e: Exception) {
+        ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
     // 6. Get items by user (all items listed by a user)

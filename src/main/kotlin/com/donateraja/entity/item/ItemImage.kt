@@ -1,20 +1,29 @@
 package com.donateraja.entity.item
 
-import jakarta.persistence.*
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "item_images")
-data class ItemImage(
+class ItemImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val imageId: Long? = null,
+    val imageId: Long? = null
 
     @ManyToOne
     @JoinColumn(name = "item_id")
-    val item: Item,
+    val item: Item = Item()
 
-    val imageUrl: String,
+    val imageUrl: String = ""
 
-    val createdAt: LocalDateTime
-)
+    val createdAt: LocalDateTime = LocalDateTime.now()
+
+    constructor()
+    // All-argument constructor (explicitly defined)
+}

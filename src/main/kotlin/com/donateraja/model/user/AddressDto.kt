@@ -8,7 +8,6 @@ data class AddressDto(
     @Size(max = 20, message = "Pin code must not exceed 20 characters")
     val pinCode: String,
 
-
     @JsonProperty("street")
     @NotBlank(message = "Street is required")
     val street: String? = null,

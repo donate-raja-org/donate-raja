@@ -1,5 +1,7 @@
 package com.donateraja.entity.constants
 
 enum class Status {
-    ACTIVE, INACTIVE, BANNED
+    ACTIVE,
+    INACTIVE,
+    BANNED
 }

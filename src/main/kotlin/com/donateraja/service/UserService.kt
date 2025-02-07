@@ -1,6 +1,10 @@
 package com.donateraja.service
 
-import com.donateraja.model.user.*
+import com.donateraja.model.user.ChangePasswordDto
+import com.donateraja.model.user.ResetPasswordDto
+import com.donateraja.model.user.UserLoginDto
+import com.donateraja.model.user.UserProfileDto
+import com.donateraja.model.user.UserRegistrationDto
 
 interface UserService {
     fun registerUser(userRegistrationDto: UserRegistrationDto): Any

@@ -17,9 +17,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig(
-    private val jwtAuthenticationFilter: JwtAuthenticationFilter
-) {
+class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilter) {
+
+    companion object {
+        private val PUBLIC_URLS = arrayOf(
+            "/auth/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/configuration/**",
+            "/webjars/**"
+        )
+    }
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -27,15 +37,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers(
-                        "/auth/**",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/swagger-resources/**",
-                        "/configuration/**",
-                        "/webjars/**"
-                    ).permitAll()
+                    .requestMatchers(*PUBLIC_URLS).permitAll()
                     .anyRequest().authenticated()
             }
             .sessionManagement { session ->
@@ -47,9 +49,7 @@ class SecurityConfig(
     }
 
     @Bean
-    fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager {
-        return authConfig.authenticationManager
-    }
+    fun authenticationManager(authConfig: AuthenticationConfiguration): AuthenticationManager = authConfig.authenticationManager
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()

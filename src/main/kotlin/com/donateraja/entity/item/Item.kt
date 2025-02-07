@@ -4,7 +4,16 @@ import com.donateraja.entity.constants.Category
 import com.donateraja.entity.constants.Condition
 import com.donateraja.entity.constants.DonationOrRent
 import com.donateraja.entity.user.User
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
 
 @Entity
 @Table(name = "items")
@@ -34,13 +43,20 @@ class Item {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    lateinit var user: User  // Using lateinit to prevent initialization issues
+    lateinit var user: User // Using lateinit to prevent initialization issues
 
-    constructor()  // No-arg constructor for Hibernate
+    constructor() // No-arg constructor for Hibernate
 
     constructor(
-        id: Long, itemName: String, description: String, condition: Condition,
-        price: Double, location: String, category: Category, donationOrRent: DonationOrRent, user: User
+        id: Long,
+        itemName: String,
+        description: String,
+        condition: Condition,
+        price: Double,
+        location: String,
+        category: Category,
+        donationOrRent: DonationOrRent,
+        user: User
     ) {
         this.id = id
         this.itemName = itemName
@@ -53,9 +69,3 @@ class Item {
         this.user = user
     }
 }
-
-
-
-
-
-

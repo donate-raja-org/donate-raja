@@ -2,7 +2,18 @@ package com.donateraja.entity.user
 
 import com.donateraja.entity.constants.Role
 import com.donateraja.entity.constants.Status
-import jakarta.persistence.*
+import jakarta.persistence.CollectionTable
+import jakarta.persistence.Column
+import jakarta.persistence.ElementCollection
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.Table
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
@@ -28,13 +39,13 @@ data class User(
     @Column(nullable = false)
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @NotNull(message = "Password cannot be null")
-    @get:JvmName("getUserPassword") // Renamed JVM getter
+    @get:JvmName("getUserPassword")
     var password: String,
 
     @Column(unique = true, nullable = false)
     @Size(min = 3, message = "Username must be at least 3 characters long")
     @NotNull(message = "Username cannot be null")
-    @get:JvmName("getUserUsername") // Renamed JVM getter
+    @get:JvmName("getUserUsername")
     var username: String,
 
     @Column(name = "first_name")
@@ -51,8 +62,6 @@ data class User(
     @Column(name = "profile_picture")
     var profilePicture: String? = null,
 
-
-
 //    @Column(name = "pincode")
 //    var pincode: String? = null,
 
@@ -64,7 +73,7 @@ data class User(
 
     @Enumerated(EnumType.STRING)
     @Column
-    var status: Status = Status.ACTIVE, // Use enum instead of string for status
+    var status: Status = Status.ACTIVE,
 
     @Column(name = "is_email_verified")
     var isEmailVerified: Boolean = false,
@@ -87,9 +96,7 @@ data class User(
     @Column(name = "last_login_at")
     var lastLoginAt: LocalDateTime? = null
 ) : UserDetails {
-    override fun getAuthorities(): Collection<GrantedAuthority> {
-        return roles.map { SimpleGrantedAuthority(it.name) }
-    }
+    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority(it.name) }
 
     override fun getPassword(): String = password
 

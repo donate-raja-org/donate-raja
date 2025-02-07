@@ -1,5 +1,3 @@
-package com.donateraja.annotation
-
 import com.donateraja.common.exception.ServiceError
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -22,7 +20,11 @@ import kotlin.reflect.KClass
                 Content(
                     mediaType = "application/json",
                     schema = Schema(implementation = Any::class),
-                    examples = [ExampleObject(value = """{"message": "Operation successful", "data": {"userId": 123}}""")]
+                    examples = [
+                        ExampleObject(
+                            value = """{"message": "Operation successful", "data": {"userId": 123}}"""
+                        )
+                    ]
                 )
             ]
         ),
@@ -70,6 +72,7 @@ annotation class ApiOperationWithCustomResponses(
 
     @get:AliasFor(annotation = Operation::class, attribute = "description")
     val description: String,
-    val successSchema: KClass<*> = Any::class,  // Only for 200 response
-    val responseExamples: Array<ExampleObject> = []  // Custom examples for each response
+
+    val successSchema: KClass<out Any> = Any::class,
+    val responseExamples: Array<ExampleObject> = arrayOf()
 )

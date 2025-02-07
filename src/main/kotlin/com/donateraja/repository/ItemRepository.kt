@@ -9,14 +9,14 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ItemRepository : JpaRepository<Item, Long> {
 
-
-
-    @Query("""
+    @Query(
+        """
         SELECT i FROM Item i
         WHERE (LOWER(i.itemName) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(i.description) LIKE LOWER(CONCAT('%', :query, '%')))
         AND (:category IS NULL OR i.category = :category)
         AND (:donationOrRent IS NULL OR i.donationOrRent = :donationOrRent)
-    """)
+    """
+    )
     fun findByFilters(
         @Param("query") query: String?,
         @Param("category") category: String?,
@@ -25,12 +25,14 @@ interface ItemRepository : JpaRepository<Item, Long> {
 
     fun findByUserId(userId: Long): List<Item>
 
-    @Query("""
+    @Query(
+        """
         SELECT i FROM Item i
         WHERE (LOWER(i.itemName) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(i.description) LIKE LOWER(CONCAT('%', :query, '%')))
         AND (:category IS NULL OR i.category = :category)
         AND (:donationOrRent IS NULL OR i.donationOrRent = :donationOrRent)
-    """)
+    """
+    )
     fun findItems(
         @Param("query") query: String,
         @Param("category") category: String?,

@@ -88,3 +88,19 @@ or
 ```
 DELETE FROM flyway_schema_history WHERE version = '1';
 ```
+
+
+### Run these commands before commiting the code 
+
+```shell
+./gradlew clean build
+./gradlew check 
+```
+
+```shell
+./gradlew ktlintCheck
+```
+
+```shell
+./gradlew ktlintFormat
+```

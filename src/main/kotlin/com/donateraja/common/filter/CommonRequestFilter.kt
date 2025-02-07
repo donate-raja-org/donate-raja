@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import java.util.*
+import java.util.UUID
 
 @Component
 class CommonRequestFilter : OncePerRequestFilter() {
@@ -20,25 +20,25 @@ class CommonRequestFilter : OncePerRequestFilter() {
 
     private val logger = LoggerFactory.getLogger(CommonRequestFilter::class.java)
 
-    override fun doFilterInternal(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        filterChain: FilterChain
-    ) {
-        // Exclude authentication requests from being logged
-        if (request.requestURI.startsWith(AUTH_PATH_PREFIX)) {
+    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
+        val requestUri = request.requestURI
+
+        // Exclude authentication and Swagger-related requests from logging
+        if (requestUri.startsWith(AUTH_PATH_PREFIX) ||
+            requestUri.startsWith("/swagger") ||
+            requestUri.startsWith("/v3/api-docs") ||
+            requestUri.startsWith("/webjars/swagger-ui") ||
+            requestUri.startsWith("/swagger-resources")
+        ) {
             filterChain.doFilter(request, response)
             return
         }
 
         val transactionId = UUID.randomUUID().toString()
-
-        // Retrieve user ID from the request attribute set by JwtAuthenticationFilter
         val userId = request.getAttribute(USER_ID) as? String ?: "anonymous"
 
         MDC.put(TRANSACTION_ID, transactionId)
         MDC.put(USER_ID, userId)
-//        MDC.put(ROLE, )
 
         val requestStartTime = System.currentTimeMillis()
         var statusCode: Int? = null
@@ -62,17 +62,10 @@ class CommonRequestFilter : OncePerRequestFilter() {
         val query = request.queryString?.let { "?$it" } ?: ""
         val fullUrl = "$uri$query"
 
-        logger.info {
-            """
-            Request Details:
-            - Method: $method
-            - URL: $fullUrl
-            - Status: ${statusCode ?: "UNKNOWN"}
-            - Duration: ${duration}ms
-            - Transaction ID: ${MDC.get(TRANSACTION_ID)}
-            - User ID: ${MDC.get(USER_ID)}
-            """.trimIndent()
-        }
+        logger.info(
+            "Request Details: Method: $method, URL: $fullUrl, Status: ${statusCode ?: "UNKNOWN"}, " +
+                "Duration: ${duration}ms, Transaction ID: ${MDC.get(TRANSACTION_ID)}, " +
+                "User ID: ${MDC.get(USER_ID)}"
+        )
     }
 }
-

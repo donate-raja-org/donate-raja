@@ -19,7 +19,6 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
         )
     }
 
-
     fun uploadFile(filePath: String, fileName: String): String {
         try {
             val file = File(filePath)
@@ -57,9 +56,8 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
     }
 
     fun generatePublicUrl(fileName: String): String {
-        return "${backblazeConfig.publicBaseUrl}/${fileName}"
+        return "${backblazeConfig.publicBaseUrl}/$fileName"
     }
-
 
     fun deleteFile(fileName: String) {
         try {
