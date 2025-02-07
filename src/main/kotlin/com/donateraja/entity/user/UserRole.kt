@@ -1,18 +1,16 @@
 package com.donateraja.entity.user
 
-
 import jakarta.persistence.*
 
 @Entity
 @Table(name = "user_roles")
-class UserRole(  // ✅ Regular class prevents infinite recursion
-    @EmbeddedId
-    var id: UserRoleId,
-
+data class UserRole(
+    @Id
     @ManyToOne
-    @MapsId("userId")
     @JoinColumn(name = "user_id", nullable = false)
-    var user: User
+    val user: User,
+
+    @Id
+    @Column(name = "role", nullable = false)
+    val role: String
 )
-
-

@@ -21,25 +21,21 @@ class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter
 ) {
 
-    companion object {
-        private val PUBLIC_URLS = arrayOf(
-            "/auth/**",
-            "/swagger-ui.html",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/swagger-resources/**",
-            "/configuration/**",
-            "/webjars/**"
-        )
-    }
-
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers(*PUBLIC_URLS).permitAll()
+                    .requestMatchers(
+                        "/auth/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/configuration/**",
+                        "/webjars/**"
+                    ).permitAll()
                     .anyRequest().authenticated()
             }
             .sessionManagement { session ->

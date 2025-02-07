@@ -1,11 +1,10 @@
 package com.donateraja.common.util
 
-import com.donateraja.common.exception.ServiceException
 import com.donateraja.configuration.JwtTokenConfig
-import com.donateraja.domain.auth.AuthResponse
-import io.jsonwebtoken.*
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.stereotype.Service
@@ -15,88 +14,141 @@ import java.time.Instant
 import java.util.*
 
 @Service
-class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
+class JwtUtil(
+    private val jwtTokenConfig: JwtTokenConfig
+) {
 
-    private val key: Key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtTokenConfig.base64Secret))
-
-    @Throws(ServiceException::class)
-    fun generateAccessToken(authentication: Authentication): AuthResponse {
-        return buildToken(authentication.name, authentication.authorities, parseDuration(jwtTokenConfig.accessTokenExpiration))
+    // Generate JWT Access Token using jjwt
+    fun generateAccessToken(authentication: Authentication): String {
+        return buildToken(
+            userId = authentication.name,
+            authorities = authentication.authorities,
+            expiration = parseDuration(jwtTokenConfig.accessTokenExpiration)
+        )
     }
 
-    @Throws(ServiceException::class)
-    fun generateRefreshToken(authentication: Authentication): AuthResponse {
-        return buildToken(authentication.name, emptySet(), parseDuration(jwtTokenConfig.refreshTokenExpiration))
+    // Generate JWT Refresh Token using jjwt
+    fun generateRefreshToken(authentication: Authentication): String {
+        return buildToken(
+            userId = authentication.name,
+            authorities = emptySet(),  // Refresh tokens usually don't carry roles
+            expiration = parseDuration(jwtTokenConfig.refreshTokenExpiration)
+        )
     }
 
-    private fun buildToken(userId: String, authorities: Collection<GrantedAuthority>, expiration: Duration): AuthResponse {
-        val roles = authorities.map { it.authority }.ifEmpty { listOf("ROLE_USER") }
+    // Build JWT Token using jjwt
+    private fun buildToken(
+        userId: String,
+        authorities: Collection<GrantedAuthority>,
+        expiration: Duration
+    ): String {
+        val roles = if (authorities.isEmpty()) listOf("ROLE_USER") else authorities.map { it.authority }
 
-        val token = Jwts.builder()
+        val key: Key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtTokenConfig.base64Secret))
+
+        return Jwts.builder()
             .setIssuer(jwtTokenConfig.issuer)
             .setSubject(userId)
             .setIssuedAt(Date.from(Instant.now()))
             .setExpiration(Date.from(Instant.now().plus(expiration)))
-            .claim("roles", roles)
-            .signWith(key, SignatureAlgorithm.HS256)
+            .claim("roles", roles)  // Ensure this claim is consistent
+            .signWith(key, SignatureAlgorithm.HS256)  // Use HMAC with SHA-256
             .compact()
-
-        return AuthResponse(token, expiration.toMillis(), roles, null)
     }
 
-    fun validateToken(token: String): Boolean {
-        return try {
-            val claims = extractAllClaims(token)
-            if (claims.expiration.before(Date())) {
-                throw ServiceException(HttpStatus.UNAUTHORIZED, "Token expired, please refresh")
-            }
-            true
-        } catch (e: ExpiredJwtException) {
-            throw ServiceException(HttpStatus.UNAUTHORIZED, "Token expired, please refresh")
-        } catch (e: JwtException) {
-            throw ServiceException(HttpStatus.FORBIDDEN, "Invalid token")
-        }
-    }
-
-    fun extractUsername(token: String): String = extractClaim(token) { it.subject }
-
-    fun extractRoles(token: String): List<String> {
-        return try {
-            extractClaim(token) { claims ->
-                claims["roles"]?.let { it as List<*> }?.mapNotNull { it as? String } ?: emptyList()
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    fun <T> extractClaim(token: String, claimsResolver: (Claims) -> T): T {
-        return claimsResolver(extractAllClaims(token))
-    }
-
-    fun extractAllClaims(token: String): Claims {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).body
-    }
-
-    fun isTokenExpired(token: String): Boolean {
-        return try {
-            val claims = extractAllClaims(token)
-            claims.expiration.before(Date())
-        } catch (e: ExpiredJwtException) {
-            true
-        }
-    }
-
-    fun parseDuration(duration: String): Duration {
+    // Parse expiration string (e.g., "1h", "2d", etc.) to Duration
+    private fun parseDuration(durationString: String): Duration {
         val pattern = Regex("(\\d+)([hmsd])")
-        val matchResult = pattern.find(duration) ?: throw IllegalArgumentException("Invalid duration format: $duration")
-        val amount = matchResult.groupValues[1].toLong()
-        return when (matchResult.groupValues[2]) {
-            "h" -> Duration.ofHours(amount)
-            "m" -> Duration.ofMinutes(amount)
-            "s" -> Duration.ofSeconds(amount)
-            "d" -> Duration.ofDays(amount)
-            else -> throw IllegalArgumentException("Unsupported time unit in duration: $duration")
+        val matchResult = pattern.find(durationString)
+        if (matchResult != null) {
+            val amount = matchResult.groupValues[1].toLong()
+            val unit = matchResult.groupValues[2]
+            return when (unit) {
+                "h" -> Duration.ofHours(amount)
+                "m" -> Duration.ofMinutes(amount)
+                "s" -> Duration.ofSeconds(amount)
+                "d" -> Duration.ofDays(amount)
+                else -> throw IllegalArgumentException("Unsupported time unit")
+            }
         }
+        throw IllegalArgumentException("Invalid duration string format")
+    }
+
+    // Decode JWT token using jjwt
+    fun validateToken(token: String): Map<String, Any> {
+        val key: Key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtTokenConfig.base64Secret))
+
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .body
+    }
+
+    // Method to extract specific claim
+    private fun <T> extractClaim(token: String, claimsResolver: (Claims) -> T): T {
+        val claims = extractAllClaims(token)
+        return claimsResolver(claims)
+    }
+
+    // Method to check if the token has expired
+    private fun isTokenExpired(token: String): Boolean {
+        return extractExpiration(token).before(Date())
+    }
+
+    // Method to extract expiration date from the token
+    private fun extractExpiration(token: String): Date {
+        return extractClaim(token) { it.expiration }
+    }
+
+    // Method to extract the username (subject) from the token
+    fun extractUsername(token: String): String {
+        return extractClaim(token) { it.subject }
+    }
+
+    // Method to extract the username (subject) from the token
+    fun extractUserId(token: String): String {
+        return extractClaim(token) { it.subject }
+    }
+
+    // Method to validate the token
+    fun validateToken(token: String, username: String): Boolean {
+        return (username == extractUsername(token)) && !isTokenExpired(token)
+    }
+
+    fun extractUserIdFromBearerToken(authorizationHeader: String?): String? {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return null
+        }
+        val token = authorizationHeader.substring("Bearer ".length)
+        return try {
+            parseTokenToExtractUsername(token)
+        } catch (ex: Exception) {
+            null
+        }
+    }
+
+    private fun parseTokenToExtractUsername(token: String): String? {
+        return try {
+            val key: Key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtTokenConfig.base64Secret))
+            val claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .body
+            claims.subject // Typically username or user ID in the token
+        } catch (ex: Exception) {
+            null
+        }
+    }
+
+    private fun extractAllClaims(token: String): Claims {
+        val key: Key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtTokenConfig.base64Secret))
+        return Jwts.parserBuilder()
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .body
     }
 }
+

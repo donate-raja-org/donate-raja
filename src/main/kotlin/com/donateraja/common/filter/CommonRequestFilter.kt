@@ -62,12 +62,17 @@ class CommonRequestFilter : OncePerRequestFilter() {
         val query = request.queryString?.let { "?$it" } ?: ""
         val fullUrl = "$uri$query"
 
-        logger.info(
-            "Request Details: Method: $method, URL: $fullUrl, Status: ${statusCode ?: "UNKNOWN"}, " +
-                    "Duration: ${duration}ms, Transaction ID: ${MDC.get(TRANSACTION_ID)}, " +
-                    "User ID: ${MDC.get(USER_ID)}"
-        )
-
+        logger.info {
+            """
+            Request Details:
+            - Method: $method
+            - URL: $fullUrl
+            - Status: ${statusCode ?: "UNKNOWN"}
+            - Duration: ${duration}ms
+            - Transaction ID: ${MDC.get(TRANSACTION_ID)}
+            - User ID: ${MDC.get(USER_ID)}
+            """.trimIndent()
+        }
     }
 }
 

@@ -11,14 +11,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.time.LocalDateTime
 
-
 @Entity
 @Table(name = "users")
-class User(
+data class User(
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false, updatable = false)
-    var id: Long = 0,
+    val id: Long = 0,
 
     @Column(unique = true, nullable = false)
     @Email(message = "Email should be valid")
@@ -28,13 +28,13 @@ class User(
     @Column(nullable = false)
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @NotNull(message = "Password cannot be null")
-    @get:JvmName("getUserPassword") // Avoids clash
+    @get:JvmName("getUserPassword") // Renamed JVM getter
     var password: String,
 
     @Column(unique = true, nullable = false)
     @Size(min = 3, message = "Username must be at least 3 characters long")
     @NotNull(message = "Username cannot be null")
-    @get:JvmName("getUserName")
+    @get:JvmName("getUserUsername") // Renamed JVM getter
     var username: String,
 
     @Column(name = "first_name")
@@ -51,6 +51,11 @@ class User(
     @Column(name = "profile_picture")
     var profilePicture: String? = null,
 
+
+
+//    @Column(name = "pincode")
+//    var pincode: String? = null,
+
     @ElementCollection(targetClass = Role::class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
     @Enumerated(EnumType.STRING)
@@ -59,7 +64,7 @@ class User(
 
     @Enumerated(EnumType.STRING)
     @Column
-    var status: Status = Status.ACTIVE,
+    var status: Status = Status.ACTIVE, // Use enum instead of string for status
 
     @Column(name = "is_email_verified")
     var isEmailVerified: Boolean = false,
@@ -82,33 +87,13 @@ class User(
     @Column(name = "last_login_at")
     var lastLoginAt: LocalDateTime? = null
 ) : UserDetails {
-    constructor() : this(
-        id = 0,
-        email = "",
-        password = "",
-        username = "",
-        firstName = "",
-        lastName = "",
-        phoneNumber = null,
-        profilePicture = null,
-        roles = setOf(Role.ROLE_USER),
-        status = Status.ACTIVE,
-        isEmailVerified = false,
-        isPhoneVerified = false,
-        verificationCode = null,
-        verificationExpires = null,
-        createdAt = LocalDateTime.now(),
-        updatedAt = LocalDateTime.now(),
-        lastLoginAt = null
-    )
-
     override fun getAuthorities(): Collection<GrantedAuthority> {
         return roles.map { SimpleGrantedAuthority(it.name) }
     }
 
-    override fun getPassword(): String = password  // No clash due to @get:JvmName above
+    override fun getPassword(): String = password
 
-    override fun getUsername(): String = this.username
+    override fun getUsername(): String = username
 
     override fun isAccountNonExpired(): Boolean = true
 

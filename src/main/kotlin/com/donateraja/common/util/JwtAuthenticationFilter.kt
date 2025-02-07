@@ -1,14 +1,14 @@
-package com.donateraja.common.util
+package com.donateraja.common.util  // Ensure this matches your actual package structure
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+
 
 @Component
 class JwtAuthenticationFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilter() {
@@ -21,34 +21,20 @@ class JwtAuthenticationFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilt
     ) {
         val authHeader = request.getHeader("Authorization")
 
-        if (!authHeader.isNullOrEmpty() && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
             val token = authHeader.substring(7)
+            val userId = jwtUtil.extractUserId(token)
 
-            try {
-                if (jwtUtil.isTokenExpired(token)) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has expired")
-                    return
-                }
-
-                val userId = jwtUtil.extractUsername(token) // Extract subject (user identifier)
-                val claims = jwtUtil.extractAllClaims(token) // Extract claims
-
-                if (userId != null && SecurityContextHolder.getContext().authentication == null) {
-                    val roles = claims["roles"] as? List<String> ?: listOf("ROLE_USER")
-                    val authorities = roles.map { SimpleGrantedAuthority(it) }
-
-                    val auth = UsernamePasswordAuthenticationToken(userId, null, authorities)
+            if (userId != null && SecurityContextHolder.getContext().authentication == null) {
+                if (jwtUtil.validateToken(token, userId)) {
+                    val auth = UsernamePasswordAuthenticationToken(userId, null, emptyList())
                     SecurityContextHolder.getContext().authentication = auth
 
-                    // Store user ID in request attributes for controllers to access
+                    // Store the extracted user ID in request attributes for reuse
                     request.setAttribute("user_id", userId)
                 }
-            } catch (e: Exception) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token: ${e.message}")
-                return
             }
         }
-
         chain.doFilter(request, response)
     }
 }

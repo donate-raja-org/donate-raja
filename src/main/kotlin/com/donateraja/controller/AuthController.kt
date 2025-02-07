@@ -1,28 +1,65 @@
 package com.donateraja.controller
-import com.donateraja.common.exception.ServiceException
-import com.donateraja.domain.auth.AuthRequest
-import com.donateraja.domain.auth.AuthResponse
+
 import com.donateraja.model.user.UserRegistrationDto
 import com.donateraja.service.AuthService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+
 @RestController
 @RequestMapping("/auth")
 class AuthController(private val authService: AuthService) {
 
     @PostMapping("/register")
-    @Throws(ServiceException::class)
-    fun register(@RequestBody @Valid userRegistrationDto: UserRegistrationDto): ResponseEntity<AuthResponse> {
-        val token = authService.registerUser(userRegistrationDto)
-        return ResponseEntity.ok(token)
+    fun register(@RequestBody @Valid userRegistrationDto: UserRegistrationDto): ResponseEntity<String> {
+        return try {
+            val token = authService.registerUser(userRegistrationDto)
+            ResponseEntity.ok("User registered successfully. Token: $token")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(e.message ?: "Registration failed")
+        }
     }
 
     @PostMapping("/login")
-    @Throws(ServiceException::class)
-    fun login(@RequestBody @Valid authRequest: AuthRequest): ResponseEntity<AuthResponse> {
-        val token = authService.loginUser(authRequest.emailIdOrPhoneNumber, authRequest.password)
-        return ResponseEntity.ok(token)
+    fun login(@RequestParam email: String, @RequestParam password: String): ResponseEntity<String> {
+        return try {
+            val token = authService.loginUser(email, password)
+            ResponseEntity.ok("Login successful. Token: $token")
+        } catch (e: Exception) {
+            ResponseEntity.badRequest().body(e.message ?: "Login failed")
+        }
     }
+
+
+//    @GetMapping("/validate-token")
+//    fun validateToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<String> {
+//        val token = authHeader.removePrefix("Bearer ").trim()
+//
+//        return try {
+//            val decodedToken = authService.validateToken(token)
+//            // You can also check the validity and expiration here
+//            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
+//        } catch (e: Exception) {
+//            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
+//        }
+//    }
+
+//    @GetMapping("/validate-token")
+//    fun validateToken(@RequestHeader("Authorization") authorization: String?): ResponseEntity<String> {
+//            if (authorization.isNullOrEmpty()) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                .body("Authorization header is missing.")
+//        }
+//
+//        val token = authorization.removePrefix("Bearer ").trim()
+//
+//        return try {
+//            val decodedToken = authService.validateToken(token)
+//            ResponseEntity.ok("Token is valid. Claims: $decodedToken")
+//        } catch (e: Exception) {
+//            ResponseEntity.badRequest().body("Invalid or expired token: ${e.message}")
+//        }
+//    }
+
 }
