@@ -1,10 +1,10 @@
 package com.donateraja.entity.user
 
-import com.donateraja.entity.constants.Role
 import com.donateraja.entity.constants.Status
-import jakarta.persistence.CollectionTable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonManagedReference
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -12,20 +12,19 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "users")
-data class User(
-
+@JsonIgnoreProperties("addresses", "roles")
+class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false, updatable = false)
@@ -34,45 +33,32 @@ data class User(
     @Column(unique = true, nullable = false)
     @Email(message = "Email should be valid")
     @NotNull(message = "Email cannot be null")
-    var email: String,
+    var email: String = "",
+
+    @Column(name = "phone_number", unique = true)
+    var phoneNumber: String? = null,
 
     @Column(nullable = false)
     @Size(min = 8, message = "Password must be at least 8 characters long")
     @NotNull(message = "Password cannot be null")
-    @get:JvmName("getUserPassword")
-    var password: String,
+    private var password: String, // Made private for security
 
     @Column(unique = true, nullable = false)
     @Size(min = 3, message = "Username must be at least 3 characters long")
     @NotNull(message = "Username cannot be null")
-    @get:JvmName("getUserUsername")
-    var username: String,
+    private var username: String,
 
     @Column(name = "first_name")
-    @NotNull(message = "First name cannot be null")
-    var firstName: String,
+    var firstName: String? = null,
 
     @Column(name = "last_name")
-    @NotNull(message = "Last name cannot be null")
-    var lastName: String,
-
-    @Column(name = "phone_number")
-    var phoneNumber: String? = null,
+    var lastName: String? = null,
 
     @Column(name = "profile_picture")
     var profilePicture: String? = null,
 
-//    @Column(name = "pincode")
-//    var pincode: String? = null,
-
-    @ElementCollection(targetClass = Role::class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    var roles: Set<Role> = setOf(Role.ROLE_USER),
-
-    @Enumerated(EnumType.STRING)
-    @Column
     var status: Status = Status.ACTIVE,
 
     @Column(name = "is_email_verified")
@@ -94,19 +80,43 @@ data class User(
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "last_login_at")
-    var lastLoginAt: LocalDateTime? = null
+    var lastLoginAt: LocalDateTime? = null,
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonManagedReference
+    val addresses: MutableSet<Address> = mutableSetOf(),
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonManagedReference
+    val roles: MutableSet<UserRole> = mutableSetOf()
 ) : UserDetails {
-    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority(it.name) }
 
-    override fun getPassword(): String = password
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority> =
+        roles.map { GrantedAuthority { it.role.name } }.toMutableList()
 
-    override fun getUsername(): String = username
+    override fun getPassword(): String = password // Expose for Spring Security authentication
+
+    override fun getUsername(): String = email // Spring Security uses email for authentication
 
     override fun isAccountNonExpired(): Boolean = true
 
-    override fun isAccountNonLocked(): Boolean = true
+    override fun isAccountNonLocked(): Boolean = status == Status.ACTIVE
 
     override fun isCredentialsNonExpired(): Boolean = true
 
     override fun isEnabled(): Boolean = status == Status.ACTIVE
+
+    // Prevent infinite recursion in equals/hashCode
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is User) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = id.hashCode()
+
+    constructor() : this(
+        0, "", "", "", "", null, null, null,
+        Status.ACTIVE, false, false, null, null, LocalDateTime.now(), LocalDateTime.now(), null
+    )
 }

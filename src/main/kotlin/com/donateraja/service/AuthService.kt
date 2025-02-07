@@ -10,9 +10,7 @@ import com.donateraja.repository.AddressRepository
 import com.donateraja.repository.UserRepository
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.Authentication
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -60,22 +58,37 @@ class AuthService(
         }
     }
 
-    fun loginUser(emailOrPhone: String, password: String): AuthResponse {
-        try {
-            // Find user by email or phone number
-            val user = userRepository.findByEmail(emailOrPhone)
-                ?: userRepository.findByPhoneNumber(emailOrPhone)
-                ?: throw ServiceException(HttpStatus.NOT_FOUND, "User not found")
+//    fun loginUser(emailOrPhone: String, password: String): AuthResponse {
+//        try {
+//            // Find user by email or phone number
+//            val user = userRepository.findByEmail(emailOrPhone)
+//                ?: userRepository.findByPhoneNumber(emailOrPhone)
+//                ?: throw ServiceException(HttpStatus.NOT_FOUND, "User not found")
+//
+//            val authentication: Authentication = authenticationManager.authenticate(
+//                UsernamePasswordAuthenticationToken(user.email, password)
+//            )
+//
+//            return jwtUtil.generateAccessToken(authentication)
+//        } catch (e: BadCredentialsException) {
+//            throw ServiceException(HttpStatus.UNAUTHORIZED, "Invalid email or password")
+//        } catch (e: Exception) {
+//            throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Login failed: ${e.message}")
+//        }
+//    }
 
-            val authentication: Authentication = authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken(user.email, password)
-            )
-
-            return jwtUtil.generateAccessToken(authentication)
-        } catch (e: BadCredentialsException) {
-            throw ServiceException(HttpStatus.UNAUTHORIZED, "Invalid email or password")
-        } catch (e: Exception) {
-            throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Login failed: ${e.message}")
+    fun loginUser(identifier: String, password: String): AuthResponse {
+        val user: User? = when {
+            identifier.contains("@") -> userRepository.findByEmail(identifier)
+            identifier.all { it.isDigit() } -> {
+                userRepository.findByPhoneNumber(identifier)
+                    ?: identifier.toLongOrNull()?.let { userRepository.findById(it).orElse(null) }
+            }
+            else -> throw ServiceException(HttpStatus.UNAUTHORIZED, "UserId or Email or Phone is invalid")
         }
+        val authentication = authenticationManager.authenticate(
+            UsernamePasswordAuthenticationToken(user!!.email, password)
+        )
+        return jwtUtil.generateAccessToken(authentication)
     }
 }

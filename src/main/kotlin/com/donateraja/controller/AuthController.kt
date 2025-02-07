@@ -26,7 +26,7 @@ class AuthController(private val authService: AuthService) {
     @PostMapping("/login")
     @Throws(ServiceException::class)
     fun login(@RequestBody @Valid authRequest: AuthRequest): ResponseEntity<AuthResponse> {
-        val token = authService.loginUser(authRequest.emailIdOrPhoneNumber, authRequest.password)
+        val token = authService.loginUser(authRequest.emailIdOrPhoneNumberOrCustomerId, authRequest.password)
         return ResponseEntity.ok(token)
     }
 }

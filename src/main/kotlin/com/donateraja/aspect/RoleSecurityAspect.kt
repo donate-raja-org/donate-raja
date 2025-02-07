@@ -3,6 +3,7 @@ package com.donateraja.aspect
 import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
@@ -12,45 +13,64 @@ import org.springframework.stereotype.Component
 @Component
 class RoleSecurityAspect(private val request: HttpServletRequest) {
 
-    // Public APIs (No authentication required)
+    private val logger = LoggerFactory.getLogger(RoleSecurityAspect::class.java)
+
+    /**
+     * Allows public access to methods or classes annotated with @PublicAccess.
+     */
     @Before("@within(com.donateraja.annotation.PublicAccess) || @annotation(com.donateraja.annotation.PublicAccess)")
     fun allowPublicAccess() {
-        // No security check needed
+        // No security check needed for public endpoints
     }
 
-    // User Required (Works at both Class & Method level)
+    /**
+     * Ensures that the request is authenticated as a regular user.
+     */
     @Before("@within(com.donateraja.annotation.RequireUser) || @annotation(com.donateraja.annotation.RequireUser)")
     fun checkUserAccess() {
         val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication == null || authentication.principal !is UserDetails) {
+        if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
+            logger.warn("Unauthorized user access attempt from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Unauthorized: User login required")
         }
     }
 
-    // Admin Required
+    /**
+     * Ensures that the request is authenticated as an admin user.
+     */
     @Before("@within(com.donateraja.annotation.RequireAdmin) || @annotation(com.donateraja.annotation.RequireAdmin)")
     fun checkAdminAccess() {
         val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication == null || authentication.principal !is UserDetails) {
+        if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
+            logger.warn("Unauthorized admin access attempt from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Unauthorized: Admin login required")
         }
 
         val authorities = authentication.authorities.map { it.authority }
-        if (!authorities.contains("ROLE_ADMIN")) {
+        if (!authorities.contains("ROLE_ADMIN") && !authorities.contains("ADMIN")) {
+            logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Forbidden: Admin role required")
         }
     }
 
-    // User OR Admin Required
+    /**
+     * Ensures that the request is authenticated as either a regular user or an admin.
+     */
     @Before("@within(com.donateraja.annotation.RequireUserOrAdmin) || @annotation(com.donateraja.annotation.RequireUserOrAdmin)")
     fun checkUserOrAdminAccess() {
         val authentication = SecurityContextHolder.getContext().authentication
-        if (authentication == null || authentication.principal !is UserDetails) {
+        if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
+            logger.warn("Unauthorized user/admin access attempt from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Unauthorized: User or Admin login required")
         }
 
         val authorities = authentication.authorities.map { it.authority }
-        if (!authorities.contains("ROLE_USER") && !authorities.contains("ROLE_ADMIN")) {
+        if (!authorities.contains("ROLE_USER") &&
+            !authorities.contains("USER") &&
+            !authorities.contains("ROLE_ADMIN") &&
+            !authorities.contains("ADMIN")
+        ) {
+            logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Forbidden: Access requires User or Admin role")
         }
     }

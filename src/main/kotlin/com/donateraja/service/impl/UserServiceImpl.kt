@@ -41,9 +41,9 @@ class UserServiceImpl(private val userRepository: UserRepository, private val pa
             id = savedUser.id,
             email = savedUser.email,
             username = savedUser.username,
-            firstName = savedUser.firstName,
-            lastName = savedUser.lastName,
-            phoneNumber = savedUser.phoneNumber
+            firstName = savedUser.firstName ?: "",
+            lastName = savedUser.lastName ?: "",
+            phoneNumber = savedUser.phoneNumber ?: ""
         )
     }
 
@@ -70,8 +70,8 @@ class UserServiceImpl(private val userRepository: UserRepository, private val pa
             id = user.id,
             email = user.email,
             username = user.username,
-            firstName = user.firstName,
-            lastName = user.lastName,
+            firstName = user.firstName ?: "",
+            lastName = user.lastName ?: "",
             phoneNumber = user.phoneNumber
         )
     }
@@ -91,8 +91,8 @@ class UserServiceImpl(private val userRepository: UserRepository, private val pa
             id = updatedUser.id,
             email = updatedUser.email,
             username = updatedUser.username,
-            firstName = updatedUser.firstName,
-            lastName = updatedUser.lastName,
+            firstName = updatedUser.firstName ?: "",
+            lastName = updatedUser.lastName ?: "",
             phoneNumber = updatedUser.phoneNumber
         )
     }
