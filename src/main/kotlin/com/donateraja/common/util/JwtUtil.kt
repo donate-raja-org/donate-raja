@@ -29,17 +29,20 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
 
     private fun buildToken(userId: String, authorities: Collection<GrantedAuthority>, expiration: Duration): AuthResponse {
         val roles = authorities.map { it.authority }.ifEmpty { listOf("ROLE_USER") }
-
+        val claims = mapOf(
+            "roles" to authorities.map { it.authority }.ifEmpty { listOf("ROLE_USER") },
+            "userId" to userId
+        )
         val token = Jwts.builder()
             .setIssuer(jwtTokenConfig.issuer)
             .setSubject(userId)
             .setIssuedAt(Date.from(Instant.now()))
             .setExpiration(Date.from(Instant.now().plus(expiration)))
-            .claim("roles", roles)
+            .addClaims(claims)
             .signWith(key, SignatureAlgorithm.HS256)
             .compact()
 
-        return AuthResponse(token, expiration.toMillis(), roles, null)
+        return AuthResponse(token, expiration.toMillis(), roles, claims, userId)
     }
 
     fun validateToken(token: String): Boolean = try {
@@ -92,7 +95,7 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
         .setIssuer(jwtTokenConfig.issuer)
         .setSubject(userId)
         .setIssuedAt(Date())
-        .setExpiration(Date()) // Immediate expiry
+        .setExpiration(Date())
         .signWith(key, SignatureAlgorithm.HS256)
         .compact()
 }

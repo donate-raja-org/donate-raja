@@ -6,5 +6,6 @@ data class UserProfileDto(
     val username: String,
     val firstName: String,
     val lastName: String,
-    val phoneNumber: String?
+    val phoneNumber: String?,
+    val profilePicture: String?
 )

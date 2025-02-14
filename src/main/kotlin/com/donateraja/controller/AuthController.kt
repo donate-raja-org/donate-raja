@@ -5,6 +5,7 @@ import com.donateraja.domain.auth.AuthRequest
 import com.donateraja.domain.auth.AuthResponse
 import com.donateraja.model.user.UserRegistrationDto
 import com.donateraja.service.AuthService
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication", description = "APIs related to User Authentication, Login, and Registration")
 class AuthController(private val authService: AuthService) {
 
     private val logger = LoggerFactory.getLogger(AuthController::class.java)

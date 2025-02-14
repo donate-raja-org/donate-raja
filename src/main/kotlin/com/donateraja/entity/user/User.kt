@@ -96,7 +96,7 @@ class User(
 
     override fun getPassword(): String = password // Expose for Spring Security authentication
 
-    override fun getUsername(): String = email // Spring Security uses email for authentication
+    override fun getUsername(): String = id.toString() // Spring Security uses email for authentication
 
     override fun isAccountNonExpired(): Boolean = true
 

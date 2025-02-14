@@ -86,6 +86,9 @@ class AuthService(
             }
             else -> throw ServiceException(HttpStatus.UNAUTHORIZED, "UserId or Email or Phone is invalid")
         }
+        if (user == null) {
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "UserId or Email or Phone is invalid")
+        }
         val authentication = authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(identifier, password)
         )
