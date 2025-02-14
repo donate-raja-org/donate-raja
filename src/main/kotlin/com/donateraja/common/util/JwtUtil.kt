@@ -3,11 +3,7 @@ package com.donateraja.common.util
 import com.donateraja.common.exception.ServiceException
 import com.donateraja.configuration.JwtTokenConfig
 import com.donateraja.domain.auth.AuthResponse
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.ExpiredJwtException
-import io.jsonwebtoken.JwtException
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
+import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
@@ -91,4 +87,12 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
             else -> throw IllegalArgumentException("Unsupported time unit in duration: $duration")
         }
     }
+
+    fun generateExpiredToken(userId: String): String = Jwts.builder()
+        .setIssuer(jwtTokenConfig.issuer)
+        .setSubject(userId)
+        .setIssuedAt(Date())
+        .setExpiration(Date()) // Immediate expiry
+        .signWith(key, SignatureAlgorithm.HS256)
+        .compact()
 }

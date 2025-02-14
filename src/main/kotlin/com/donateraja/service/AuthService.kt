@@ -87,8 +87,23 @@ class AuthService(
             else -> throw ServiceException(HttpStatus.UNAUTHORIZED, "UserId or Email or Phone is invalid")
         }
         val authentication = authenticationManager.authenticate(
-            UsernamePasswordAuthenticationToken(user!!.email, password)
+            UsernamePasswordAuthenticationToken(identifier, password)
         )
         return jwtUtil.generateAccessToken(authentication)
+    }
+
+    fun logoutUser(token: String): AuthResponse {
+        if (!jwtUtil.validateToken(token)) {
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "Invalid or expired token")
+        }
+
+        // Generate a token with 0ms expiry
+        val expiredToken = jwtUtil.generateExpiredToken(jwtUtil.extractUsername(token))
+
+        return AuthResponse(
+            token = expiredToken,
+            expiresIn = 0L,
+            roles = emptyList()
+        )
     }
 }

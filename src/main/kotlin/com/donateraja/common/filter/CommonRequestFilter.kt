@@ -1,5 +1,6 @@
 package com.donateraja.common.filter
 
+import com.donateraja.common.util.JwtUtil
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -10,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 import java.util.UUID
 
 @Component
-class CommonRequestFilter : OncePerRequestFilter() {
+class CommonRequestFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilter() {
 
     companion object {
         private const val TRANSACTION_ID = "transaction_id"
@@ -34,8 +35,11 @@ class CommonRequestFilter : OncePerRequestFilter() {
             return
         }
 
+        // Generate unique transaction ID
         val transactionId = UUID.randomUUID().toString()
-        val userId = request.getAttribute(USER_ID) as? String ?: "anonymous"
+
+        // Extract userId from JWT or set as anonymous
+        val userId = extractUserIdFromRequest(request)
 
         MDC.put(TRANSACTION_ID, transactionId)
         MDC.put(USER_ID, userId)
@@ -53,6 +57,21 @@ class CommonRequestFilter : OncePerRequestFilter() {
             val requestDuration = System.currentTimeMillis() - requestStartTime
             logRequestDetails(request, statusCode, requestDuration)
             MDC.clear()
+        }
+    }
+
+    private fun extractUserIdFromRequest(request: HttpServletRequest): String {
+        // Check for Bearer token in Authorization header
+        val authHeader = request.getHeader("Authorization")
+        return if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            val token = authHeader.substring(7)
+            try {
+                jwtUtil.extractUsername(token)
+            } catch (e: Exception) {
+                "anonymous"
+            }
+        } else {
+            "anonymous"
         }
     }
 

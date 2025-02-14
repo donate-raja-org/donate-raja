@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.media.Schema
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Instant
 
 class ServiceError {
 
@@ -24,7 +23,7 @@ class ServiceError {
 
     @JsonProperty("timestamp")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS]'Z'")
-    var timestampInMillis: LocalDateTime? = null
+    var timestamp: Instant = Instant.now()
 
     constructor(
         errorCode: Int?,
@@ -36,7 +35,7 @@ class ServiceError {
         this.message = message
         this.description = description
         this.transactionId = transactionId
-        this.timestampInMillis = LocalDateTime.now(ZoneOffset.UTC)
+        this.timestamp = Instant.now()
     }
 
     override fun toString(): String {
