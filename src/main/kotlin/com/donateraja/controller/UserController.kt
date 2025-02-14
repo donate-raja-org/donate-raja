@@ -1,17 +1,28 @@
+package com.donateraja.controller
+
+import ApiOperationWithCustomResponses
+import com.donateraja.annotation.RequireAdmin
 import com.donateraja.model.user.ChangePasswordDto
 import com.donateraja.model.user.ResetPasswordDto
 import com.donateraja.model.user.UserProfileDto
-import com.donateraja.service.UserService
+import com.donateraja.service.impl.UserServiceImpl
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/users")
 @Tag(name = "User Management", description = "APIs related to User Registration and Authentication")
-class UserController(private val userService: UserService) {
+class UserController(private val userService: UserServiceImpl) {
 
     // Get user profile by ID
     @GetMapping("/{userId}")
@@ -71,6 +82,7 @@ class UserController(private val userService: UserService) {
         description = "Assigns an admin role to the user."
 //        successSchema = AuthResponse::class
     )
+    @RequireAdmin
     fun addAdminRole(@PathVariable userId: Long): ResponseEntity<Any> {
         userService.addAdminRole(userId)
         return ResponseEntity(HttpStatus.OK)
