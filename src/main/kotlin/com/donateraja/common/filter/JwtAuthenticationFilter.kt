@@ -1,5 +1,6 @@
-package com.donateraja.common.util
+package com.donateraja.common.filter
 
+import com.donateraja.common.util.JwtUtil
 import com.donateraja.service.CustomUserDetailsService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException

@@ -3,8 +3,13 @@ package com.donateraja.common.util
 import com.donateraja.common.exception.ServiceException
 import com.donateraja.configuration.JwtTokenConfig
 import com.donateraja.domain.auth.AuthResponse
-import io.jsonwebtoken.*
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.JwtException
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
+import jakarta.annotation.PostConstruct
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
@@ -12,7 +17,11 @@ import org.springframework.stereotype.Service
 import java.security.Key
 import java.time.Duration
 import java.time.Instant
-import java.util.*
+import java.util.Base64
+import java.util.Date
+import java.util.Timer
+import java.util.TimerTask
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
@@ -28,9 +37,9 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
         buildToken(authentication.name, emptySet(), parseDuration(jwtTokenConfig.refreshTokenExpiration))
 
     private fun buildToken(userId: String, authorities: Collection<GrantedAuthority>, expiration: Duration): AuthResponse {
-        val roles = authorities.map { it.authority }.ifEmpty { listOf("ROLE_USER") }
+        val roles = authorities.map { it.authority }.ifEmpty { listOf("USER") }
         val claims = mapOf(
-            "roles" to authorities.map { it.authority }.ifEmpty { listOf("ROLE_USER") },
+            "roles" to authorities.map { it.authority }.ifEmpty { listOf("USER") },
             "userId" to userId
         )
         val token = Jwts.builder()
@@ -47,6 +56,9 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
 
     fun validateToken(token: String): Boolean = try {
         val claims = extractAllClaims(token)
+        if (isBlacklisted(token)) {
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "Token revoked")
+        }
         if (claims.expiration.before(Date())) {
             throw ServiceException(HttpStatus.UNAUTHORIZED, "Token expired, please refresh")
         }
@@ -91,11 +103,35 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
         }
     }
 
-    fun generateExpiredToken(userId: String): String = Jwts.builder()
-        .setIssuer(jwtTokenConfig.issuer)
-        .setSubject(userId)
-        .setIssuedAt(Date())
-        .setExpiration(Date())
-        .signWith(key, SignatureAlgorithm.HS256)
-        .compact()
+    // Add token blacklist component
+    private val tokenBlacklist = ConcurrentHashMap<String, Instant>()
+
+    // Add scheduled cleanup for blacklisted tokens
+    @PostConstruct
+    fun init() {
+        Timer().scheduleAtFixedRate(
+            object : TimerTask() {
+                override fun run() {
+                    cleanExpiredBlacklistedTokens()
+                }
+            },
+            0,
+            60 * 60 * 1000
+        ) // Clean hourly
+    }
+
+    // Add to existing class
+    fun addToBlacklist(token: String) {
+        val expiration = extractAllClaims(token).expiration.toInstant()
+        if (expiration.isAfter(Instant.now())) {
+            tokenBlacklist[token] = expiration
+        }
+    }
+
+    fun isBlacklisted(token: String): Boolean = tokenBlacklist[token]?.isAfter(Instant.now()) ?: false
+
+    private fun cleanExpiredBlacklistedTokens() {
+        val now = Instant.now()
+        tokenBlacklist.entries.removeIf { entry -> entry.value.isBefore(now) }
+    }
 }

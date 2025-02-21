@@ -6,36 +6,58 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
-data class UserRegistrationDto(
+class UserRegistrationDto {
+
     @JsonProperty("username")
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = "username cannot be null or blank")
     @Size(max = 50)
-    val username: String,
+    var username: String? = null
 
     @JsonProperty("email")
-    @NotBlank(message = "Email is required")
+    @NotBlank(message = "Email cannot be null or blank")
     @Email
     @Size(max = 100)
-    val email: String,
+    var email: String? = null
 
-    @JsonProperty("phoneNumber")
+    @JsonProperty("phone_number cannot be null or blank")
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number")
-    val phoneNumber: String? = null,
+    var phoneNumber: String? = null
 
     @JsonProperty("password")
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Password  cannot be null or blank")
     @Size(min = 8, max = 255)
-    val password: String,
+    var password: String? = null
 
-    @JsonProperty("firstName")
-    @NotBlank(message = "First name is required")
-    val firstName: String,
+    @JsonProperty("first_name")
+    @NotBlank(message = "first_name  cannot be null or blank")
+    var firstName: String? = null
 
-    @JsonProperty("lastName")
-    @NotBlank(message = "Last name is required")
-    val lastName: String,
+    @JsonProperty("last_name")
+    @NotBlank(message = "last_name cannot be null or blank")
+    var lastName: String = ""
 
     @JsonProperty("pincode")
+    @NotBlank(message = "pincode cannot be null or blank")
     @Pattern(regexp = "^[1-9][0-9]{5}$", message = "Invalid pincode format")
-    val pincode: String
-)
+    var pincode: String? = null
+
+    constructor()
+
+    constructor(
+        username: String,
+        email: String,
+        phoneNumber: String?,
+        password: String,
+        firstName: String,
+        lastName: String,
+        pincode: String
+    ) {
+        this.username = username
+        this.email = email
+        this.phoneNumber = phoneNumber
+        this.password = password
+        this.firstName = firstName
+        this.lastName = lastName
+        this.pincode = pincode
+    }
+}

@@ -32,5 +32,5 @@ class UserRole(
     @Column(nullable = false)
     var role: Role
 ) {
-    constructor() : this(0, User(), Role.ROLE_USER) // ✅ Default constructor for Hibernate
+    constructor() : this(0, User(), Role.USER) // ✅ Default constructor for Hibernate
 }

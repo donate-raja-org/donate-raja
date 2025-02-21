@@ -7,6 +7,7 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGSERIAL PRIMARY KEY,                       -- Unique ID for each user
     username VARCHAR(50) NOT NULL UNIQUE,                -- Unique username for login
+    user_bio VARCHAR(50) ,                               -- Unique username for login
     email VARCHAR(100) NOT NULL UNIQUE,                  -- Unique email for communication/login
     phone_number VARCHAR(15) UNIQUE,                     -- Unique phone number (optional)
     password VARCHAR(255) NOT NULL,                      -- Hashed password
@@ -20,8 +21,40 @@ CREATE TABLE IF NOT EXISTS users (
     verification_expires TIMESTAMP,                      -- Expiry for verification code
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- When the user was created
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- Last update timestamp
-    last_login_at TIMESTAMP                              -- Last login timestamp
+    last_login_at TIMESTAMP,                              -- Last login timestamp
+    failed_login_attempts INT DEFAULT 0,          -- NEW: Brute-force protection
+    account_locked_until TIMESTAMP                -- NEW: Account lock duration
 );
+
+-- Weekly Banner Table (For Featured Causes/Events)
+CREATE TABLE banners (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    image_url TEXT,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE login_sessions (
+    session_id SERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    user_agent TEXT,
+    ip_address INET NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+-- Index for user_id (improves query performance for user-based lookups)
+CREATE INDEX idx_login_sessions_user_id ON login_sessions(user_id);
+
+-- Index for token (improves performance for token validation)
+CREATE INDEX idx_login_sessions_token ON login_sessions(token);
+
+-- Index for expiration (optimizes session cleanup)
+CREATE INDEX idx_login_sessions_expires ON login_sessions(expires_at);
 
 -- CREATE ADDRESSES TABLE
 CREATE TABLE IF NOT EXISTS addresses (
@@ -264,6 +297,8 @@ CREATE TABLE IF NOT EXISTS messages (
     receiver_id BIGINT NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_by_sender BOOLEAN DEFAULT FALSE,      -- NEW: Soft delete tracking
+    deleted_by_receiver BOOLEAN DEFAULT FALSE,     -- NEW: Soft delete tracking
     CONSTRAINT fk_message_sender FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
     CONSTRAINT fk_message_receiver FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
@@ -276,10 +311,14 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
     amount DECIMAL(10, 2) NOT NULL,  -- Amount paid
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Payment date
     status VARCHAR(50) CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED')),  -- Payment status
+    payment_method VARCHAR(50) CHECK (payment_method IN ('CREDIT_CARD', 'PAYPAL', 'BANK_TRANSFER')),  -- NEW
+    transaction_reference VARCHAR(255) UNIQUE,     -- NEW: Prevent duplicate payments
     FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,  -- Foreign key to items table
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE  -- Foreign key to users table
 );
-
+-- NEW INDEXES (Performance critical)
+CREATE INDEX IF NOT EXISTS idx_login_sessions_user ON login_sessions(user_id, expires_at);  -- NEW: Session cleanup
+CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON messages(sender_id, receiver_id);  -- NEW: Message lookup
 -- ==========================
 -- End of Migration V1
 -- ==========================

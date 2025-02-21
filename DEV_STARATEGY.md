@@ -1,204 +1,141 @@
-# Donate Raja API Endpoints
+## **Donate Raja API Endpoints**
 
-This document lists all the API endpoints for the **Donate Raja** platform. Each endpoint is described with the HTTP method, description, developer responsible for the implementation, the current status of the endpoint, and the expected date to finish.
+This document outlines all the essential API endpoints for the **Donate Raja** platform, detailing methods for user management, item management, request handling, transactions, and admin functionalities.
 
----
-
-## **User Management**
+### **User Management**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/users/register` | `POST` | Register a new user (include username, email, phone number, password, etc.). |  |  |  |
-| `/api/users/login` | `POST` | Login a user using username/password or social login (Google/Facebook). |  |  |  |
+| `/api/users/register` | `POST` | Register a new user (includes first name, last name, email, phone number, password, and pincode). |  |  |  |
+| `/api/users/login` | `POST` | Login a user using username/email/phone and password. |  |  |  |
 | `/api/users/logout` | `POST` | Logout the user from the session. |  |  |  |
-| `/api/users/{user_id}` | `GET` | Get user profile information by user ID. |  |  |  |
-| `/api/users/{user_id}` | `PUT` | Update user profile (first name, last name, profile picture, etc.). |  |  |  |
+| `/api/users/{user_id}` | `GET` | Fetch user profile details by user ID. |  |  |  |
+| `/api/users/{user_id}` | `PUT` | Update user profile information (name, address, profile picture, etc.). |  |  |  |
 | `/api/users/{user_id}/change-password` | `PUT` | Change user password. |  |  |  |
-| `/api/users/{user_id}/reset-password` | `POST` | Reset user password (send reset link to email/phone). |  |  |  |
+| `/api/users/{user_id}/reset-password` | `POST` | Send a password reset link via email/phone. |  |  |  |
 
----
+### **Item Management**
 
-## **Item Management**
-
-### **User-specific Views (Own Posts)**
+#### **User-specific Views (Own Posts)**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/users/{user_id}/posted-rentals` | `GET` | Get all rentals posted by the user (user's own rental posts). |  |  |  |
-| `/api/users/{user_id}/asked-rentals` | `GET` | Get all rentals asked for by the user (user's own rental requests). |  |  |  |
-| `/api/users/{user_id}/donated-items` | `GET` | Get all donated items by the user (user's own donated items). |  |  |  |
-| `/api/users/{user_id}/asked-donations` | `GET` | Get all donation requests asked by the user (user's own donation requests). |  |  |  |
+| `/api/users/{user_id}/posted-rentals` | `GET` | Get rentals posted by the user. |  |  |  |
+| `/api/users/{user_id}/asked-rentals` | `GET` | Get rental requests by the user. |  |  |  |
+| `/api/users/{user_id}/donated-items` | `GET` | Get items donated by the user. |  |  |  |
+| `/api/users/{user_id}/asked-donations` | `GET` | Get donation requests by the user. |  |  |  |
 
-### **User-specific Views (All Posts by Others)**
+#### **User-specific Views (All Posts by Others)**
 
-| Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
-|----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/items/posted-rentals` | `GET` | Get all posted rentals (from all users). |  |  |  |
-| `/api/items/asked-rentals` | `GET` | Get all asked rentals (from all users). |  |  |  |
-| `/api/items/donated-items` | `GET` | Get all donated items (from all users). |  |  |  |
-| `/api/items/asked-donations` | `GET` | Get all asked donations (from all users). |  |  |  |
+| Endpoint                         | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
+|----------------------------------|-------------|-------------|----------------|--------|----------------------|
+| `/api/items/rentals`             | `GET` | Get all posted rentals from all users. |  |  |  |
+| `/api/items/requested/rentals`   | `GET` | Get all rental requests from all users. |  |  |  |
+| `/api/items/donations`           | `GET` | Get all donated items from all users. |  |  |  |
+| `/api/items/requested/donations` | `GET` | Get all donation requests from all users. |  |  |  |
 
-### **Donated Items (User-specific)**
-
-| Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
-|----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/items/donate` | `POST` | Donating a new item (user submits item for donation). |  |  |  |
-| `/api/items/{item_id}/donated` | `PUT` | Update donated item information (e.g., condition, category). |  |  |  |
-| `/api/items/{item_id}/remove-donation` | `DELETE` | Remove a donated item from the platform. |  |  |  |
-
-### **Rental Items (User-specific)**
+#### **Donated Items (User-specific)**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/items/rent` | `POST` | Post an item for rent (user submits item for rent). |  |  |  |
-| `/api/items/{item_id}/rental` | `PUT` | Update rental item information (e.g., price, rental duration). |  |  |  |
+| `/api/items/donate` | `POST` | Post a new donated item (includes description, condition, etc.). |  |  |  |
+| `/api/items/{item_id}/donated` | `PUT` | Update donated item details (condition, category, etc.). |  |  |  |
+| `/api/items/{item_id}/remove-donation` | `DELETE` | Remove a donated item. |  |  |  |
+
+#### **Rental Items (User-specific)**
+
+| Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
+|----------|-------------|-------------|----------------|--------|----------------------|
+| `/api/items/rent` | `POST` | Post an item for rent (includes description, price, duration, etc.). |  |  |  |
+| `/api/items/{item_id}/rental` | `PUT` | Update rental item details (price, duration, etc.). |  |  |  |
 | `/api/items/{item_id}/remove-rental` | `DELETE` | Remove a rental item from the platform. |  |  |  |
 
-### **Item-specific Requests (Donations, Rentals)**
+#### **Item Requests (Donations, Rentals)**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/items/{item_id}/send-request` | `POST` | Send a request for the item (donated, asked donation, posted rental, asked rental). |  |  |  |
-| `/api/items/{item_id}/requests` | `GET` | Get all requests for an item (donated, asked donation, posted rental, or asked rental). |  |  |  |
-| `/api/items/{item_id}/requests/{request_id}/approve` | `POST` | Approve a request for the item (admin or owner can approve). |  |  |  |
-| `/api/items/{item_id}/requests/{request_id}/reject` | `POST` | Reject a request for the item (admin or owner can reject). |  |  |  |
-| `/api/items/{item_id}/requests/{request_id}/view` | `GET` | View details of a specific request for an item. |  |  |  |
+| `/api/items/{item_id}/send-request` | `POST` | Send a request for an item (donation or rental). |  |  |  |
+| `/api/items/{item_id}/requests` | `GET` | View all requests for a specific item. |  |  |  |
+| `/api/items/{item_id}/requests/{request_id}/approve` | `POST` | Approve a request for the item (admin or owner). |  |  |  |
+| `/api/items/{item_id}/requests/{request_id}/reject` | `POST` | Reject a request for the item (admin or owner). |  |  |  |
 | `/api/items/{item_id}/requests/{request_id}/cancel` | `POST` | Cancel a request for an item (user or admin). |  |  |  |
 
----
-
-## **Transaction Management**
+### **Transaction Management**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/transactions` | `GET` | Get a list of all transactions (filter by user, type, status, etc.). |  |  |  |
+| `/api/transactions` | `GET` | Get all transactions (filter by user, type, status). |  |  |  |
 | `/api/transactions/{transaction_id}` | `GET` | Get details of a specific transaction. |  |  |  |
-| `/api/transactions` | `POST` | Create a new transaction (user initiates donation or rental request). |  |  |  |
-| `/api/transactions/{transaction_id}/status` | `PUT` | Update transaction status (admin or user can approve/cancel, etc.). |  |  |  |
-| `/api/transactions/{transaction_id}/payment` | `POST` | Make payment for a donation or rental transaction. |  |  |  |
-| `/api/transactions/{transaction_id}/complete` | `POST` | Mark transaction as completed (finalize donation or rental). |  |  |  |
+| `/api/transactions/{transaction_id}/payment` | `POST` | Process payment for a donation or rental. |  |  |  |
+| `/api/transactions/{transaction_id}/complete` | `POST` | Mark a transaction as completed (finalize donation/rental). |  |  |  |
 
----
-
-## **Payment Transactions**
+### **Admin Management**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/payment/transactions` | `POST` | Process a payment for an item (for donations or rentals). |  |  |  |
-| `/api/payment/transactions/{payment_id}` | `GET` | Get payment transaction details. |  |  |  |
-| `/api/payment/transactions/{payment_id}` | `PUT` | Update payment transaction (status, amount adjustment, etc.). |  |  |  |
-
----
-
-## **Admin Management**
-
-| Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
-|----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/admin/users` | `GET` | Get a list of all users (admin only). |  |  |  |
-| `/api/admin/users/{user_id}` | `GET` | Get a specific user's details (admin only). |  |  |  |
+| `/api/admin/users` | `GET` | View all users (admin only). |  |  |  |
 | `/api/admin/users/{user_id}/block` | `POST` | Block a user (admin only). |  |  |  |
-| `/api/admin/items` | `GET` | Get a list of all items (admin only). |  |  |  |
-| `/api/admin/items/{item_id}/approve` | `POST` | Approve an item for donation or rental (admin only). |  |  |  |
-| `/api/admin/items/{item_id}/reject` | `POST` | Reject an item for donation or rental (admin only). |  |  |  |
-| `/api/admin/items/{item_id}/remove` | `DELETE` | Remove an item from the platform (admin only). |  |  |  |
-| `/api/admin/transactions` | `GET` | View all transactions (admin only). |  |  |  |
-| `/api/admin/transactions/{transaction_id}/approve` | `POST` | Approve a transaction (admin only). |  |  |  |
-| `/api/admin/transactions/{transaction_id}/cancel` | `POST` | Cancel a transaction (admin only). |  |  |  |
+| `/api/admin/items/{item_id}/approve` | `POST` | Approve an item for donation/rental (admin only). |  |  |  |
+| `/api/admin/items/{item_id}/reject` | `POST` | Reject an item for donation/rental (admin only). |  |  |  |
 
----
-
-## **Search & Filters**
+### **Search & Filters**
 
 | Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
 |----------|-------------|-------------|----------------|--------|----------------------|
 | `/api/search/items` | `GET` | Search items by keyword, category, or tags. |  |  |  |
-| `/api/search/transactions` | `GET` | Search transaction history based on various filters. |  |  |  |
-| `/api/search/users` | `GET` | Search users based on name, email, or phone. |  |  |  |
+| `/api/search/transactions` | `GET` | Search transactions with filters (e.g., status, date). |  |  |  |
+| `/api/search/users` | `GET` | Search users by name, email, or phone. |  |  |  |
 
 ---
 
-## **Categories and Conditions**
+### **Core Features**
 
-| Endpoint | HTTP Method | Description | Developer Name | Status | Expected Finish Date |
-|----------|-------------|-------------|----------------|--------|----------------------|
-| `/api/categories` | `GET` | Get all available categories. |  |  |  |
-| `/api/categories` | `POST` | Create a new category (admin only). |  |  |  |
-| `/api/categories/{category_id}` | `PUT` | Update category details (admin only). |  |  |  |
-| `/api/categories/{category_id}` | `DELETE` | Delete a category (admin only). |  |  |  |
-| `/api/conditions` | `GET` | Get all available conditions. |  |  |  |
-| `/api/conditions` | `POST` | Create a new condition (admin only). |  |  |  |
-| `/api/conditions/{condition_id}` | `PUT` | Update condition details (admin only). |  |  |  |
-| `/api/conditions/{condition_id}` | `DELETE` | Delete a condition (admin only). |  |  |  |
+#### 1. **User Management**
+- **Registration/Login**: Users can register using email, phone, or userid (jpa generated) accounts. Login options include user ID/password and password reset.
+- **Profile Management**: Users can manage their profile, including name, address, and profile picture.
+- **Security**: Includes password change and reset functionalities.
+
+#### 2. **Item Management**
+- **Donations and Rentals**: Users can post, update, and remove items they want to donate or rent.
+- **Request Handling**: Users can send, view, approve, or reject requests for donations or rentals.
+
+#### 3. **Transaction Management**
+- **Payments**: Payment processing for donation and rental transactions.
+- **Transaction Completion**: Finalization of transactions for both donations and rentals.
+
+#### 4. **Admin Features**
+- **User and Item Management**: Admins can block users, approve/reject posted items, and manage transactions.
+- **Moderation**: Admins can view and manage all platform activities, ensuring fair use and safety.
+
+#### 5. **Search and Filter**
+- **Efficient Search**: Search for items, users, and transactions based on multiple filters like category, status, and date.
 
 ---
 
-This document covers:
+### **User Flow**
 
-- User management (profile, login/logout, reset password).
-- Donation and rental item management (create, update, remove).
-- Request management for donations and rentals (send request, approve/reject).
-- Transaction management (creating, updating, payment, completion).
-- Admin functionality for managing users, items, transactions, and categories.
-- Search functionality for items, transactions, and users.
+1. **Registration/Login**:
+   - User logs in or registers via email/phone/customer_id accounts.
+   - Post-login, user is redirected to the dashboard.
 
-You can now copy-paste this comprehensive structure. Let me know if there are any further corrections needed.
+2. **Dashboard**:
+   - Display options to post a donation/rental, view personal posts, and manage account settings.
 
-### **Sample User Flow**
+3. **Item Management**:
+   - Browse available items for donation/rent and send requests.
+   - Manage own posts (update/remove).
 
-1. **Start**
-    - User visits the platform.
-    - Options to register or log in (email/phone number, Google/Facebook).
-    - User provides necessary credentials.
-    - User successfully logs in and is redirected to the Dashboard.
+4. **Transaction Handling**:
+   - Process payments for rentals.
+   - Finalize donations or rentals upon completion.
 
-2. **Dashboard**
-    - User is presented with a dashboard containing the following options:
-        - View their own posts (Donated items, Rentals, etc.).
-        - Post a new item (Donation/Rental).
-        - View all available items (for donation/rental).
-        - Manage account settings.
-
-3. **View All Available Posts**
-    - User can browse all available posts, including:
-        - **Donated Items**
-        - **Rental Items**
-        - **Requested Donations**
-        - **Requested Rentals**
-    - User can filter/search items by category, condition, price, etc.
-
-4. **Manage Own Posts**
-    - User can view and manage their own posts:
-        - **View Own Posts**: All donated, rental, and requested items.
-        - **Update Own Posts**: Modify price, description, condition, and other details.
-        - **Delete Own Posts**: Remove items from the platform.
-
-5. **Send Request for Items**
-    - User can send a request for donated or rental items.
-    - If it’s a rental, the user may also make a payment.
-    - If it’s a donation, the user can request to receive the item.
-
-6. **Post Item (Donation/Rental)**
-    - User posts a new item, including details such as description, price, category, condition, and images.
-    - New post is available for others to view and interact with.
-
-7. **User Post Owner (Post Owner Approval)**
-    - Post owner reviews requests from other users.
-    - **Approve or Reject** requests for donations or rentals.
-    - Notification sent to the requesting user after decision.
-
-8. **Transaction Completion**
-    - **For Rentals**: Payment processed, item marked as rented.
-    - **For Donations**: Item marked as donated to the requesting user.
-
-9. **Post-Transaction (Feedback & Ratings)**
-    - After the transaction completes, both parties can provide feedback or ratings.
-    - User reviews the experience, giving stars or a written review.
+5. **Post-Transaction**:
+   - Review and rate items or users after transactions.
 
 ---
 
 ### **Conclusion**
-This flow illustrates the core user journey for the Donate Raja platform. It covers everything from registration to posting items, making requests, approval process, and feedback collection.
 
----
+This API structure supports the core operations of the Donate Raja platform, ensuring smooth interaction for users, admins, and the platform’s core features. If you need any more refinements
 
-Let me know if this is more in line with what you were looking for, or if any further adjustments are needed!
+or have specific implementation questions, feel free to ask!

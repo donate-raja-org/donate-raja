@@ -6,12 +6,15 @@ import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.validation.ObjectError
+import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.MissingRequestHeaderException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import java.util.*
+import java.util.Objects
 import java.util.function.Consumer
 
 @ControllerAdvice
@@ -22,9 +25,7 @@ class ServiceExceptionHandler {
     // Handle ServiceException (custom exception)
     @ExceptionHandler(value = [ServiceException::class])
     fun handleServiceException(serviceException: ServiceException): ResponseEntity<Any> {
-        logger.error("Error occurred: ${serviceException.error}")
-        // Log the transaction ID for tracing
-        logger.info("Transaction ID: ${serviceException.error.transactionId}")
+        logger.error(serviceException.error.toString())
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
@@ -42,15 +43,33 @@ class ServiceExceptionHandler {
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-    // Handle MethodArgumentNotValidException (Invalid request body)
-    @ExceptionHandler(value = [MethodArgumentNotValidException::class])
-    fun handleMethodArgumentNotValidException(exception: MethodArgumentNotValidException): ResponseEntity<Any> {
-        logger.error("Validation failed: ${exception.message}")
+    @ExceptionHandler(value = [HttpMediaTypeNotSupportedException::class])
+    fun handleHttpMediaTypeNotSupportedException(exception: HttpMediaTypeNotSupportedException): ResponseEntity<Any> {
+        logger.error(exception.message)
         val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-    // Handle MethodArgumentTypeMismatchException (Argument type mismatch)
+    @ExceptionHandler(value = [HttpRequestMethodNotSupportedException::class])
+    fun handleHttpRequestMethodNotSupportedException(exception: HttpRequestMethodNotSupportedException): ResponseEntity<Any> {
+        logger.error(exception.message)
+        val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
+        return ResponseEntity(serviceException.error, serviceException.httpStatus)
+    }
+
+    @ExceptionHandler(value = [ConstraintViolationException::class])
+    fun handleConstraintViolationException(exception: ConstraintViolationException): ResponseEntity<Any> {
+        logger.error("Constraint violation: ${exception.message}")
+        val fieldErrors: MutableList<String> = ArrayList()
+        exception.constraintViolations.forEach(
+            Consumer { error: ConstraintViolation<*> ->
+                fieldErrors.add(error.message)
+            }
+        )
+        val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
+        return ResponseEntity(serviceException.error, serviceException.httpStatus)
+    }
+
     @ExceptionHandler(value = [MethodArgumentTypeMismatchException::class])
     fun handleMethodArgumentTypeMismatchException(exception: MethodArgumentTypeMismatchException): ResponseEntity<Any> {
         logger.error("Argument type mismatch: ${exception.message}")
@@ -58,34 +77,26 @@ class ServiceExceptionHandler {
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-    // Handle HttpMethodNotSupportedException (Unsupported HTTP method)
-    @ExceptionHandler(value = [HttpRequestMethodNotSupportedException::class])
-    fun handleHttpMethodNotSupportedException(exception: HttpRequestMethodNotSupportedException): ResponseEntity<Any> {
-        logger.error("HTTP method not supported: ${exception.message}")
-        val serviceException = ServiceException(HttpStatus.METHOD_NOT_ALLOWED, exception.message)
+    @ExceptionHandler(value = [MethodArgumentNotValidException::class])
+    fun handleMethodArgumentNotValidException(exception: MethodArgumentNotValidException): ResponseEntity<Any> {
+        val fieldErrors: MutableList<String?> = ArrayList()
+        exception.bindingResult.allErrors.forEach(Consumer { error: ObjectError -> fieldErrors.add(error.defaultMessage) })
+        logger.error(exception.message)
+        val serviceException = ServiceException(HttpStatus.BAD_REQUEST, fieldErrors.toString())
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-    // Handle HttpMessageNotReadableException (Malformed request body)
     @ExceptionHandler(value = [HttpMessageNotReadableException::class])
     fun handleHttpMessageNotReadableException(exception: HttpMessageNotReadableException): ResponseEntity<Any> {
-        logger.error("Malformed request body: ${exception.message}")
+        logger.error(exception.message)
         val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 
-    // Handle ConstraintViolationException (Constraint violations)
-    @ExceptionHandler(value = [ConstraintViolationException::class])
-    fun handleConstraintViolationException(exception: ConstraintViolationException): ResponseEntity<Any> {
-        logger.error("Constraint violation: ${exception.message}")
-        val fieldErrors: MutableList<String> = ArrayList()
-        exception.constraintViolations.forEach(
-            Consumer {
-                    error: ConstraintViolation<*> ->
-                fieldErrors.add(error.message)
-            }
-        )
-        val serviceException = ServiceException(HttpStatus.BAD_REQUEST, exception.message)
+    @ExceptionHandler(value = [MissingRequestHeaderException::class])
+    fun handleMissingRequestHeaderException(exception: MissingRequestHeaderException): ResponseEntity<Any> {
+        logger.error(exception.message)
+        val serviceException = ServiceException(HttpStatus.FORBIDDEN, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
     }
 

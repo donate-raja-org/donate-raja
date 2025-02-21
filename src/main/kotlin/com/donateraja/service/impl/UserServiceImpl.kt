@@ -1,14 +1,18 @@
 package com.donateraja.service.impl
+import com.donateraja.entity.constants.Role
+import com.donateraja.entity.user.UserRole
 import com.donateraja.model.user.ChangePasswordDto
 import com.donateraja.model.user.ResetPasswordDto
 import com.donateraja.model.user.UserProfileDto
+import com.donateraja.repository.UserRepository
+import com.donateraja.repository.UserRolesRepository
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.nio.file.Files
 import java.nio.file.Paths
 
 @Service
-class UserServiceImpl {
+class UserServiceImpl(private val userRolesRepository: UserRolesRepository, private val userRepository: UserRepository) {
 
     // Placeholder function to get user profile (to be replaced with actual implementation)
     fun getUserProfile(userId: Long): UserProfileDto {
@@ -34,7 +38,19 @@ class UserServiceImpl {
 
     // Add admin role functionality (to be implemented)
     fun addAdminRole(userId: Long) {
-        // Logic to add an admin role to the user
+        // Fetch the user by ID
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+
+        // Check if the user already has an admin role
+        if (userRolesRepository.existsByUserAndRole(user, Role.ADMIN)) {
+            throw IllegalArgumentException("User already has admin role")
+        }
+
+        // Create the UserRole without passing the ID (ID is auto-generated)
+        val userRole = UserRole(user = user, role = Role.ADMIN)
+
+        // Save the UserRole entity
+        userRolesRepository.save(userRole)
     }
 
     // Function to update profile picture

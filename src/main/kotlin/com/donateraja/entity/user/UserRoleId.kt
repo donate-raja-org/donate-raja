@@ -14,7 +14,7 @@ class UserRoleId(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    var role: Role = Role.ROLE_USER
+    var role: Role = Role.USER
 ) : Serializable {
-    constructor() : this(0, Role.ROLE_USER)
+    constructor() : this(0, Role.USER)
 }
