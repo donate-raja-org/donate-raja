@@ -66,12 +66,13 @@ class AuthServiceImpl(
 
     @Throws(ServiceException::class)
     override fun refreshToken(refreshToken: String): AuthResponse = try {
-        val userId = MDC.get("user_id").toLong()
-        val user = userRepository.findById(userId)
-        if (userRepository.existsByEmail(user.get().email)) {
+        val userId = MDC.get("user_id")
+//        val user = userRepository.findByEmail(userId)
+        if (!userRepository.existsByEmail(userId)) {
             throw ServiceException(HttpStatus.CONFLICT, "User with refresh token failed. user not exist")
         }
-        val authentication = UsernamePasswordAuthenticationToken(user.get().email, user.get().password)
+        val user = userRepository.findByEmail(userId)
+        val authentication = UsernamePasswordAuthenticationToken(user!!.email, user!!.password)
         val authResponse = jwtUtil.generateAccessToken(authentication)
         authResponse
     } catch (e: Exception) {

@@ -25,7 +25,12 @@ class CommonRequestFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilter()
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val requestUri = request.requestURI
-
+        // Generate unique transaction ID
+        val transactionId = UUID.randomUUID().toString()
+        // Extract userId from JWT or set as anonymous
+        val userId = extractUserIdFromRequest(request)
+        MDC.put(TRANSACTION_ID, transactionId)
+        MDC.put(USER_ID, userId)
         // Exclude authentication and Swagger-related requests from logging
         if (requestUri.startsWith(AUTH_PATH_PREFIX) ||
             requestUri.startsWith("/swagger") ||
@@ -36,15 +41,6 @@ class CommonRequestFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilter()
             filterChain.doFilter(request, response)
             return
         }
-
-        // Generate unique transaction ID
-        val transactionId = UUID.randomUUID().toString()
-
-        // Extract userId from JWT or set as anonymous
-        val userId = extractUserIdFromRequest(request)
-
-        MDC.put(TRANSACTION_ID, transactionId)
-        MDC.put(USER_ID, userId)
 
         val requestStartTime = System.currentTimeMillis()
         var statusCode: Int? = null

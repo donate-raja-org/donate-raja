@@ -60,8 +60,8 @@ class AuthController(private val authService: AuthService) {
 
     @ApiOperationWithCustomResponses(summary = "User logout", description = "Logs out the user by clearing security context.")
     @PostMapping("/refresh")
-    fun refreshToken(@RequestHeader("Authorization") token: String): ResponseEntity<String> {
-        authService.refreshToken(token)
-        return ResponseEntity.ok("Logout successful. Please discard the token on the client-side.")
+    fun refreshToken(@RequestHeader("Authorization") token: String): ResponseEntity<AuthResponse> {
+        val authResponse = authService.refreshToken(token)
+        return ResponseEntity.ok(authResponse)
     }
 }
