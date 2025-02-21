@@ -4,7 +4,7 @@ import ApiOperationWithCustomResponses
 import com.donateraja.common.exception.ServiceException
 import com.donateraja.domain.auth.AuthRequest
 import com.donateraja.domain.auth.AuthResponse
-import com.donateraja.model.user.UserRegistrationDto
+import com.donateraja.domain.user.UserRegistrationRequest
 import com.donateraja.service.AuthService
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.slf4j.LoggerFactory
@@ -30,10 +30,10 @@ class AuthController(private val authService: AuthService) {
         successSchema = AuthResponse::class
     )
     @PostMapping("/register")
-    fun register(@Validated @RequestBody userRegistrationDto: UserRegistrationDto): ResponseEntity<AuthResponse> {
-        logger.info("User registration attempt: ${userRegistrationDto.email}")
-        val token = authService.registerUser(userRegistrationDto)
-        logger.info("User registered successfully: ${userRegistrationDto.email}")
+    fun register(@Validated @RequestBody userRegistrationRequest: UserRegistrationRequest): ResponseEntity<AuthResponse> {
+        logger.info("User registration attempt: ${userRegistrationRequest.email}")
+        val token = authService.registerUser(userRegistrationRequest)
+        logger.info("User registered successfully: ${userRegistrationRequest.email}")
         return ResponseEntity.ok(token)
     }
 

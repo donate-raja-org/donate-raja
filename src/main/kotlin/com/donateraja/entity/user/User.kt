@@ -114,7 +114,6 @@ class User(
     }
 
     override fun hashCode(): Int = id.hashCode()
-
     constructor() : this(
         0, "", "", "", "", null, null, null,
         Status.ACTIVE, false, false, null, null, LocalDateTime.now(), LocalDateTime.now(), null

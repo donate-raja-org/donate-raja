@@ -2,10 +2,10 @@ package com.donateraja.service
 
 import com.donateraja.domain.auth.AuthRequest
 import com.donateraja.domain.auth.AuthResponse
-import com.donateraja.model.user.UserRegistrationDto
+import com.donateraja.domain.user.UserRegistrationRequest
 
 interface AuthService {
-    fun registerUser(userRegistrationDto: UserRegistrationDto): AuthResponse
+    fun registerUser(userRegistrationRequest: UserRegistrationRequest): AuthResponse
     fun loginUser(request: AuthRequest): AuthResponse
     fun refreshToken(refreshToken: String): AuthResponse
     fun logoutUser(token: String): String

@@ -2,12 +2,11 @@ package com.donateraja.entity.user
 
 import com.donateraja.entity.constants.Role
 import jakarta.persistence.Column
-import jakarta.persistence.Embeddable
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import java.io.Serializable
 
-@Embeddable
+// @Embeddable
 class UserRoleId(
     @Column(name = "user_id")
     var userId: Long = 0,

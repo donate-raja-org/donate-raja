@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGSERIAL PRIMARY KEY,                       -- Unique ID for each user
     username VARCHAR(50) NOT NULL UNIQUE,                -- Unique username for login
-    user_bio VARCHAR(50) ,                               -- Unique username for login
+    user_bio VARCHAR(255) ,                               -- Unique username for login
     email VARCHAR(100) NOT NULL UNIQUE,                  -- Unique email for communication/login
     phone_number VARCHAR(15) UNIQUE,                     -- Unique phone number (optional)
     password VARCHAR(255) NOT NULL,                      -- Hashed password
@@ -70,11 +70,18 @@ CREATE TABLE IF NOT EXISTS addresses (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE    -- Relate to the users table
 );
 
+---- CREATE USER ROLES TABLE
+--CREATE TABLE user_roles (
+--    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
+--    role VARCHAR(50) NOT NULL,                            -- Role name (e.g., USER, ADMIN)
+--    PRIMARY KEY (user_id, role),                         -- Composite primary key
+--    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
+--);
 -- CREATE USER ROLES TABLE
 CREATE TABLE user_roles (
-    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
-    role VARCHAR(50) NOT NULL,                            -- Role name (e.g., USER, ADMIN)
-    PRIMARY KEY (user_id, role),                         -- Composite primary key
+    role_id BIGSERIAL PRIMARY KEY,                             -- Unique ID for each role assignment
+    user_id BIGINT NOT NULL,                              -- Foreign key reference to the user
+    role VARCHAR(50) NOT NULL,                             -- Role name (e.g., USER, ADMIN)
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
 );
 

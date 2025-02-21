@@ -4,9 +4,11 @@ import com.donateraja.common.exception.ServiceException
 import com.donateraja.common.util.JwtUtil
 import com.donateraja.domain.auth.AuthRequest
 import com.donateraja.domain.auth.AuthResponse
+import com.donateraja.domain.user.UserRegistrationRequest
+import com.donateraja.entity.constants.Role
 import com.donateraja.entity.user.Address
 import com.donateraja.entity.user.User
-import com.donateraja.model.user.UserRegistrationDto
+import com.donateraja.entity.user.UserRole
 import com.donateraja.repository.AddressRepository
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.AuthService
@@ -28,24 +30,32 @@ class AuthServiceImpl(
     private val passwordEncoder = BCryptPasswordEncoder()
 
     @Transactional
-    override fun registerUser(userRegistrationDto: UserRegistrationDto): AuthResponse {
-        if (userRepository.existsByEmail(userRegistrationDto.email!!)) {
-            throw ServiceException(HttpStatus.CONFLICT, "User with email ${userRegistrationDto.email} already exists")
+    override fun registerUser(userRegistrationRequest: UserRegistrationRequest): AuthResponse {
+        if (userRepository.existsByEmail(userRegistrationRequest.email!!)) {
+            throw ServiceException(HttpStatus.CONFLICT, "User with email ${userRegistrationRequest.email} already exists")
         }
+
         return try {
             val user = User(
-                email = userRegistrationDto.email!!,
-                password = passwordEncoder.encode(userRegistrationDto.password),
-                username = userRegistrationDto.username!!,
-                firstName = userRegistrationDto.firstName,
-                lastName = userRegistrationDto.lastName,
-                phoneNumber = userRegistrationDto.phoneNumber
+                email = userRegistrationRequest.email!!,
+                password = passwordEncoder.encode(userRegistrationRequest.password),
+                username = userRegistrationRequest.username!!,
+                firstName = userRegistrationRequest.firstName,
+                lastName = userRegistrationRequest.lastName,
+                phoneNumber = userRegistrationRequest.phoneNumber
             )
-            val savedUser = userRepository.save(user)
-            if (!userRegistrationDto.pincode.isNullOrEmpty()) {
-                val address = Address(user = savedUser, pincode = userRegistrationDto.pincode!!)
-                addressRepository.save(address)
+
+            // ✅ Add role before saving
+            user.roles.add(UserRole(user = user, role = Role.USER)) // Ensure this method exists in your User entity
+
+            // ✅ Add address before saving (if provided)
+            if (!userRegistrationRequest.pincode.isNullOrEmpty()) {
+                val address = Address(user = user, pincode = userRegistrationRequest.pincode!!)
+                user.addresses.add(address) // Assuming User has List<Address>
             }
+
+            val savedUser = userRepository.save(user) // ✅ Save everything in one go
+
             val authentication = UsernamePasswordAuthenticationToken(user.email, user.password)
             val authResponse = jwtUtil.generateAccessToken(authentication)
             authResponse

@@ -1,4 +1,4 @@
-package com.donateraja.model.user
+package com.donateraja.domain.user
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.Email
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
-class UserRegistrationDto {
+class UserRegistrationRequest {
 
     @JsonProperty("username")
     @NotBlank(message = "username cannot be null or blank")
@@ -19,13 +19,14 @@ class UserRegistrationDto {
     @Size(max = 100)
     var email: String? = null
 
-    @JsonProperty("phone_number cannot be null or blank")
+    @JsonProperty("phone_number")
+    @NotBlank(message = "phone_number cannot be null or blank")
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number")
     var phoneNumber: String? = null
 
     @JsonProperty("password")
-    @NotBlank(message = "Password  cannot be null or blank")
-    @Size(min = 8, max = 255)
+    @NotBlank(message = "password  cannot be null or blank")
+    @Size(min = 6, max = 255, message = "password must be min 8 character long")
     var password: String? = null
 
     @JsonProperty("first_name")

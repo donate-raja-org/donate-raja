@@ -21,6 +21,7 @@ import jakarta.persistence.Table
 class UserRole(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id", nullable = false, updatable = false)
     val id: Long = 0,
 
     @ManyToOne(fetch = FetchType.LAZY)
