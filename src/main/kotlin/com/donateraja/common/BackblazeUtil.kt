@@ -1,5 +1,8 @@
+package com.donateraja.common
+
 import com.backblaze.b2.client.B2StorageClient
 import com.backblaze.b2.client.B2StorageClientFactory
+import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource
 import com.backblaze.b2.client.contentSources.B2ContentTypes
 import com.backblaze.b2.client.contentSources.B2FileContentSource
 import com.backblaze.b2.client.exceptions.B2Exception
@@ -7,6 +10,7 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest
 import com.donateraja.configuration.BackblazeConfig
 import org.springframework.stereotype.Component
 import java.io.File
+import java.security.MessageDigest
 
 @Component
 class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
@@ -18,6 +22,20 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
             "donate-raja"
         )
     }
+
+    fun uploadFile(fileBytes: ByteArray, fileName: String, contentType: String = B2ContentTypes.B2_AUTO): String {
+        val sha1 = calculateSha1(fileBytes)
+        val contentSource = B2ByteArrayContentSource.builder(fileBytes).setSha1OrNull(sha1)
+            .build()
+        val request = B2UploadFileRequest.builder(backblazeConfig.bucketId, fileName, contentType, contentSource)
+            .build()
+        b2Client.uploadSmallFile(request)
+        return generatePublicUrl(fileName)
+    }
+
+    private fun calculateSha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1")
+        .digest(bytes)
+        .joinToString("") { "%02x".format(it) }
 
     fun uploadFile(filePath: String, fileName: String): String {
         try {
@@ -55,9 +73,7 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
         return uploadedUrls
     }
 
-    fun generatePublicUrl(fileName: String): String {
-        return "${backblazeConfig.publicBaseUrl}/$fileName"
-    }
+    fun generatePublicUrl(fileName: String): String = "${backblazeConfig.publicBaseUrl}/$fileName"
 
     fun deleteFile(fileName: String) {
         try {

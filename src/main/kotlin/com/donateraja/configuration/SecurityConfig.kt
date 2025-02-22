@@ -1,7 +1,7 @@
 package com.donateraja.configuration
 
 import com.donateraja.common.filter.JwtAuthenticationFilter
-import com.donateraja.service.CustomUserDetailsService
+import com.donateraja.common.util.UserLookupUtil
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -56,10 +56,7 @@ class SecurityConfig(
     }
 
     @Bean
-    fun authenticationProvider(
-        userDetailsService: CustomUserDetailsService,
-        passwordEncoder: PasswordEncoder
-    ): AuthenticationProvider {
+    fun authenticationProvider(userDetailsService: UserLookupUtil, passwordEncoder: PasswordEncoder): AuthenticationProvider {
         val authProvider = DaoAuthenticationProvider()
         authProvider.setUserDetailsService(userDetailsService)
         authProvider.setPasswordEncoder(passwordEncoder)

@@ -7,12 +7,14 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id BIGSERIAL PRIMARY KEY,                       -- Unique ID for each user
     username VARCHAR(50) NOT NULL UNIQUE,                -- Unique username for login
-    user_bio VARCHAR(255) ,                               -- Unique username for login
     email VARCHAR(100) NOT NULL UNIQUE,                  -- Unique email for communication/login
     phone_number VARCHAR(15) UNIQUE,                     -- Unique phone number (optional)
     password VARCHAR(255) NOT NULL,                      -- Hashed password
     first_name VARCHAR(100),                             -- First name of the user
     last_name VARCHAR(100),                              -- Last name of the user
+    user_bio VARCHAR(255) ,                               -- Unique username for login
+    gender VARCHAR(20) CHECK (gender IN ('Male', 'Female', 'Other', 'Prefer not to say')),
+    dob DATE CHECK (dob <= CURRENT_DATE - INTERVAL '13 years'),  -- NEW: Date of birth with age validation
     profile_picture TEXT,                                -- URL or path to profile picture
     status VARCHAR(20) DEFAULT 'ACTIVE',                 -- Account status (ACTIVE, INACTIVE, BLOCKED)
     is_email_verified BOOLEAN DEFAULT FALSE,             -- Whether email is verified
@@ -24,6 +26,35 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMP,                              -- Last login timestamp
     failed_login_attempts INT DEFAULT 0,          -- NEW: Brute-force protection
     account_locked_until TIMESTAMP                -- NEW: Account lock duration
+);
+
+
+CREATE TABLE user_roles (
+    role_id BIGSERIAL PRIMARY KEY,                             -- Unique ID for each role assignment
+    user_id BIGINT NOT NULL,                              -- Foreign key reference to the user
+    role VARCHAR(50) NOT NULL,                             -- Role name (e.g., USER, ADMIN)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
+);
+
+
+-- CREATE INDEXES FOR USERS TABLE
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone_number);
+
+
+-- CREATE ADDRESSES TABLE
+CREATE TABLE IF NOT EXISTS addresses (
+    address_id BIGSERIAL PRIMARY KEY,                   -- Unique ID for each address
+    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
+    street VARCHAR(255) NOT NULL,                        -- Street address
+    city VARCHAR(100) NOT NULL,                          -- City
+    state VARCHAR(100) NOT NULL,                         -- State
+    pincode VARCHAR(20) NOT NULL,                       -- ZIP or postal code
+    country VARCHAR(100),                                -- Optional country field
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- When the address was created
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- Last update timestamp
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE    -- Relate to the users table
 );
 
 -- Weekly Banner Table (For Featured Causes/Events)
@@ -56,20 +87,6 @@ CREATE INDEX idx_login_sessions_token ON login_sessions(token);
 -- Index for expiration (optimizes session cleanup)
 CREATE INDEX idx_login_sessions_expires ON login_sessions(expires_at);
 
--- CREATE ADDRESSES TABLE
-CREATE TABLE IF NOT EXISTS addresses (
-    address_id BIGSERIAL PRIMARY KEY,                   -- Unique ID for each address
-    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
-    street VARCHAR(255) NOT NULL,                        -- Street address
-    city VARCHAR(100) NOT NULL,                          -- City
-    state VARCHAR(100) NOT NULL,                         -- State
-    pincode VARCHAR(20) NOT NULL,                       -- ZIP or postal code
-    country VARCHAR(100),                                -- Optional country field
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- When the address was created
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,      -- Last update timestamp
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE    -- Relate to the users table
-);
-
 ---- CREATE USER ROLES TABLE
 --CREATE TABLE user_roles (
 --    user_id BIGINT NOT NULL,                             -- Foreign key reference to the user
@@ -78,64 +95,70 @@ CREATE TABLE IF NOT EXISTS addresses (
 --    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
 --);
 -- CREATE USER ROLES TABLE
-CREATE TABLE user_roles (
-    role_id BIGSERIAL PRIMARY KEY,                             -- Unique ID for each role assignment
-    user_id BIGINT NOT NULL,                              -- Foreign key reference to the user
-    role VARCHAR(50) NOT NULL,                             -- Role name (e.g., USER, ADMIN)
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE -- Relate to the users table
-);
+
+---- CREATE CONDITIONS TABLE
+--CREATE TABLE IF NOT EXISTS conditions (
+--    condition_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each condition
+--    name VARCHAR(100) NOT NULL UNIQUE,   -- Name of the condition (e.g., New, Used, Refurbished)
+--    description TEXT                     -- Description of the condition
+--);
+--
+---- CREATE CATEGORY TABLE
+--CREATE TABLE IF NOT EXISTS categories (
+--    category_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each category
+--    name VARCHAR(100) NOT NULL UNIQUE,  -- Name of the category
+--    description TEXT                    -- Description of the category
+--);
 
 
--- CREATE INDEXES FOR USERS TABLE
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone_number);
-
--- CREATE CONDITIONS TABLE
-CREATE TABLE IF NOT EXISTS conditions (
-    condition_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each condition
-    name VARCHAR(100) NOT NULL UNIQUE,   -- Name of the condition (e.g., New, Used, Refurbished)
-    description TEXT                     -- Description of the condition
-);
-
--- CREATE CATEGORY TABLE
-CREATE TABLE IF NOT EXISTS categories (
-    category_id BIGSERIAL PRIMARY KEY,  -- Unique ID for each category
-    name VARCHAR(100) NOT NULL UNIQUE,  -- Name of the category
-    description TEXT                    -- Description of the category
-);
-
-
--- CREATE ITEMS TABLE (Merged Donation and Rental Items with unified status)
 CREATE TABLE IF NOT EXISTS items (
     item_id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
-    description TEXT,
-    condition_id BIGINT,  -- Condition ID from the conditions table
-    category_id BIGINT,  -- Category ID from the categories table
-    image_url VARCHAR(255),
-    item_type VARCHAR(50) CHECK (item_type IN ('DONATE', 'DONATE_REQUESTED', 'RENTAL', 'RENTAL_REQUESTED')),
-    price_per_day DECIMAL(10, 2), -- Only for rentals
-    available_from TIMESTAMP, -- Only for rentals
-    available_to TIMESTAMP, -- Only for rentals
-    status VARCHAR(50) CHECK (status IN (
-        'DONATED',
-        'DONATE_REQUESTED_PROVIDED',
-        'DONATE_REQUESTED',
-        'RENTAL_RECEIVED',
-        'RENTAL_REQUESTED_COMPLETED',
-        'RENTAL_REQUESTED',
-        'AVAILABLE',
-        'COMPLETED'
+    description TEXT NOT NULL,
+    condition VARCHAR(50) CHECK (condition IN ('NEW', 'USED', 'REFURBISHED')),
+    category VARCHAR(50) CHECK (category IN (
+        'ELECTRONICS', 'FURNITURE', 'BOOKS', 'CLOTHING', 'HOME_APPLIANCES',
+        'SPORTS', 'TOYS', 'VEHICLES', 'MUSIC_INSTRUMENTS', 'HEALTH_CARE',
+        'OFFICE_SUPPLIES', 'ART_CRAFTS', 'PET_SUPPLIES', 'BABY_PRODUCTS',
+        'JEWELRY', 'FOOTWEAR', 'GARDENING', 'BEAUTY_CARE', 'KITCHENWARE',
+        'EDUCATIONAL', 'MISCELLANEOUS'
     )),
+    donation_or_rent VARCHAR(20) CHECK (donation_or_rent IN ('DONATE', 'RENTAL')),
+    available_from TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    available_to TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    price DECIMAL(10,2) DEFAULT 0.0,
+    location VARCHAR(255) NOT NULL,
+    pincode VARCHAR(10) NOT NULL,
+    status VARCHAR(50) CHECK (status IN ('AVAILABLE', 'RESERVED', 'TAKEN')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE IF NOT EXISTS item_requests (
+    request_id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    request_type VARCHAR(20) CHECK (request_type IN ('DONATION', 'RENTAL')),  -- NEW: Specifies the type of request
+    message TEXT,
+    status VARCHAR(50) CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')),
+    rental_start_date TIMESTAMP,  -- NEW: Required only for rentals
+    rental_end_date TIMESTAMP,  -- NEW: Required only for rentals
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (condition_id) REFERENCES conditions(condition_id) ON DELETE SET NULL,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
-
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
 );
+
+-- CREATE INDEXES FOR ITEM REQUESTS TABLE
+CREATE INDEX IF NOT EXISTS idx_item_requests_user_id ON item_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_item_requests_item_id ON item_requests(item_id);
+CREATE INDEX IF NOT EXISTS idx_item_requests_status ON item_requests(status);
+CREATE INDEX IF NOT EXISTS idx_item_requests_request_type ON item_requests(request_type);
+
 
 -- CREATE ITEM IMAGES TABLE (New Table)
 CREATE TABLE IF NOT EXISTS item_images (
@@ -158,8 +181,8 @@ CREATE TABLE IF NOT EXISTS item_tags (
 -- CREATE INDEXES FOR ITEMS TABLE
 CREATE INDEX IF NOT EXISTS idx_items_user_id ON items(user_id);
 CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
-CREATE INDEX IF NOT EXISTS idx_items_item_type ON items(item_type);
-CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id);
+--CREATE INDEX IF NOT EXISTS idx_items_item_type ON items(item_type);
+--CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id);
 CREATE INDEX IF NOT EXISTS idx_items_available_dates ON items(available_from, available_to); -- Composite index for availability date range
 
 -- CREATE ITEM REVIEWS TABLE

@@ -58,6 +58,7 @@ dependencies {
 
     implementation("com.backblaze.b2:b2-sdk-core:6.3.0")
     implementation("com.backblaze.b2:b2-sdk-httpclient:6.3.0")
+//    implementation("org.apache.commons:commons-lang3:3.12.0")
     // JWT dependencies (JJWT API)
 //    implementation("org.springframework.security:spring-security-oauth2-jose")
 //    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")

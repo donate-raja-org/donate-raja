@@ -1,15 +1,15 @@
 package com.donateraja.service
 
 import com.donateraja.model.user.ChangePasswordDto
-import com.donateraja.model.user.ResetPasswordDto
 import com.donateraja.model.user.UserProfileDto
+import com.donateraja.model.user.UserRegistrationResponse
 import org.springframework.web.multipart.MultipartFile
 
 interface UserService {
+    fun getCurrentUserProfile(): UserProfileDto
+    fun updateUserProfile(userUpdateDTO: UserProfileDto): UserProfileDto
+    fun changePassword(changePasswordDto: ChangePasswordDto)
+    fun updateProfilePicture(file: MultipartFile): UserProfileDto
     fun getUserProfile(userId: Long): UserProfileDto
-    fun updateUserProfile(userId: Long, userProfileDto: UserProfileDto): UserProfileDto
-    fun changePassword(userId: Long, changePasswordDto: ChangePasswordDto)
-    fun resetPassword(userId: Long, resetPasswordDto: ResetPasswordDto)
-    fun updateProfilePicture(userId: Long, file: MultipartFile): UserProfileDto
-    fun addAdminRole(userId: Long): String
+    fun resendVerificationEmail(userId: Long): UserRegistrationResponse
 }
