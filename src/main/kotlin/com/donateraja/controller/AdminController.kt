@@ -8,7 +8,7 @@ import com.donateraja.domain.admin.UserProfileDto
 import com.donateraja.domain.user.UserStatusDTO
 import com.donateraja.entity.constants.UserStatus
 import com.donateraja.entity.user.UserRole
-import com.donateraja.service.AdminService
+import com.donateraja.service.impl.AdminServiceImpl
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/admin")
 @Tag(name = "Admin Management", description = "Admin operations for managing users and items")
-class AdminController(private val adminService: AdminService) {
+class AdminController(private val adminService: AdminServiceImpl) {
 
     @GetMapping("/users")
     @RequireAdmin
