@@ -39,12 +39,18 @@ class SecurityConfig(
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+//        http
+//            .csrf { it.disable() }
+//            .authorizeHttpRequests { requests ->
+//                requests
+//                    .requestMatchers(*PUBLIC_URLS)
+//                    .permitAll()
+//                    .anyRequest().authenticated()
+//            }
         http
             .csrf { it.disable() }
-            .authorizeHttpRequests { requests ->
-                requests
-                    .requestMatchers(*PUBLIC_URLS).permitAll()
-                    .anyRequest().authenticated()
+            .authorizeHttpRequests {
+                it.anyRequest().permitAll() // ✅ Make all APIs public by default
             }
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

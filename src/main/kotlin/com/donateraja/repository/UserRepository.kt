@@ -1,6 +1,8 @@
 package com.donateraja.repository
 
+import com.donateraja.entity.constants.UserStatus
 import com.donateraja.entity.user.User
+import com.donateraja.entity.user.UserRole
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -17,4 +19,12 @@ interface UserRepository : JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.email = :input OR u.phoneNumber = :input OR u.id = :input")
     fun findByAnyIdentifier(@Param("input") input: String): User?
+
+    @Query(
+        "SELECT DISTINCT u FROM User u LEFT JOIN u.roles r WHERE (:status IS NULL OR u.status = :status) AND (:role IS NULL OR r = :role)"
+    )
+    fun findUsersByStatusAndRole(@Param("status") status: UserStatus?, @Param("role") role: UserRole?): List<User>
+
+//    @Query("SELECT u FROM User u WHERE (:status IS NULL OR u.status = :status) AND (:role IS NULL OR u.role = :role)")
+//    fun findUsersByStatusAndRole(@Param("status") status: UserStatus?, @Param("role") role: UserRole?): List<User>
 }

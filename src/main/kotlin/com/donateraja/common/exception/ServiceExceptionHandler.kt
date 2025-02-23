@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import java.util.Objects
 import java.util.function.Consumer
+import javax.security.sasl.AuthenticationException
 
 @ControllerAdvice
 class ServiceExceptionHandler {
@@ -105,5 +106,11 @@ class ServiceExceptionHandler {
         logger.error("Access Denied: ${exception.message}")
         val serviceException = ServiceException(HttpStatus.FORBIDDEN, exception.message)
         return ResponseEntity(serviceException.error, serviceException.httpStatus)
+    }
+
+    @ExceptionHandler(value = [AuthenticationException::class])
+    fun handleAuthenticationException(exception: AuthenticationException): ResponseEntity<Any> {
+        logger.error("Authentication failed: ${exception.message}")
+        return ResponseEntity(mapOf("error" to "Unauthorized"), HttpStatus.UNAUTHORIZED)
     }
 }

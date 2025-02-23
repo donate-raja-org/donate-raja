@@ -55,4 +55,7 @@ interface ItemRepository : JpaRepository<Item, Long> {
         @Param("category") category: Category?,
         @Param("donationOrRent") donationOrRent: DonationOrRent?
     ): List<Item>
+
+    @Query("SELECT i FROM Item i WHERE (:status IS NULL OR i.status = :status) AND (:type IS NULL OR i.donationOrRent = :type)")
+    fun findItemsByStatusAndType(@Param("status") status: String?, @Param("type") type: String?): List<Item>
 }

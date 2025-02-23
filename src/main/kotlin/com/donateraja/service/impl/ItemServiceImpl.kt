@@ -1,8 +1,8 @@
 package com.donateraja.service.impl
 
 import com.donateraja.common.exception.ServiceException
+import com.donateraja.domain.admin.ItemResponseDTO
 import com.donateraja.domain.item.ItemCreateDTO
-import com.donateraja.domain.item.ItemResponseDTO
 import com.donateraja.domain.item.ItemStatusDTO
 import com.donateraja.domain.item.ItemUpdateDTO
 import com.donateraja.entity.constants.Category
@@ -143,7 +143,7 @@ class ItemServiceImpl(
         status = item.status,
         createdAt = item.createdAt,
         updatedAt = item.updatedAt,
-        imageUrls = itemImageRepository.findByItemId(item.id).map { it.imageUrl },
+        images = itemImageRepository.findByItemId(item.id).map { it.imageUrl },
         tags = tagRepository.findByItemId(item.id).map { it.tag }
     )
 }

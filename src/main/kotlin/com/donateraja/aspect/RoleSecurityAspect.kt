@@ -1,10 +1,11 @@
 package com.donateraja.aspect
 
+import com.donateraja.common.exception.ServiceException
 import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.slf4j.LoggerFactory
-import org.springframework.security.access.AccessDeniedException
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
@@ -31,7 +32,7 @@ class RoleSecurityAspect(private val request: HttpServletRequest) {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
             logger.warn("Unauthorized user access attempt from IP: ${request.remoteAddr}")
-            throw AccessDeniedException("Unauthorized: User login required")
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "Unauthorized: User login required")
         }
     }
 
@@ -43,13 +44,13 @@ class RoleSecurityAspect(private val request: HttpServletRequest) {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
             logger.warn("Unauthorized admin access attempt from IP: ${request.remoteAddr}")
-            throw AccessDeniedException("Unauthorized: Admin login required")
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "Unauthorized: Admin login required")
         }
 
         val authorities = authentication.authorities.map { it.authority }
         if (!authorities.contains("ADMIN")) {
             logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
-            throw AccessDeniedException("Forbidden: Admin role required")
+            throw ServiceException(HttpStatus.FORBIDDEN, "Forbidden: Admin role required")
         }
     }
 
@@ -61,13 +62,13 @@ class RoleSecurityAspect(private val request: HttpServletRequest) {
         val authentication = SecurityContextHolder.getContext().authentication
         if (authentication == null || !authentication.isAuthenticated || authentication.principal !is UserDetails) {
             logger.warn("Unauthorized user/admin access attempt from IP: ${request.remoteAddr}")
-            throw AccessDeniedException("Unauthorized: User or Admin login required")
+            throw ServiceException(HttpStatus.UNAUTHORIZED, "Unauthorized: User or Admin login required")
         }
 
         val authorities = authentication.authorities.map { it.authority }
         if (!authorities.contains("USER") && !authorities.contains("ADMIN")) {
             logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
-            throw AccessDeniedException("Forbidden: Access requires User or Admin role")
+            throw ServiceException(HttpStatus.FORBIDDEN, "Forbidden: Access requires User or Admin role")
         }
     }
 }

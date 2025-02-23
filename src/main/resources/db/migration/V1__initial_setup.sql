@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(100),                             -- First name of the user
     last_name VARCHAR(100),                              -- Last name of the user
     user_bio VARCHAR(255) ,                               -- Unique username for login
-    gender VARCHAR(20) CHECK (gender IN ('Male', 'Female', 'Other', 'Prefer not to say')),
+    gender VARCHAR(20) CHECK (gender IN ('MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY')),
     dob DATE CHECK (dob <= CURRENT_DATE - INTERVAL '13 years'),  -- NEW: Date of birth with age validation
     profile_picture TEXT,                                -- URL or path to profile picture
     status VARCHAR(20) DEFAULT 'ACTIVE',                 -- Account status (ACTIVE, INACTIVE, BLOCKED)

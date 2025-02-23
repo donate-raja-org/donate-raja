@@ -6,12 +6,10 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
-import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import java.util.UUID
 
-@Order(10)
 @Component
 class CommonRequestFilter(private val jwtUtil: JwtUtil) : OncePerRequestFilter() {
 

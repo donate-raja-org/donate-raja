@@ -206,8 +206,11 @@ enum class ApplicationConstants(val text: String) {
         fun fromKey(key: String): ApplicationConstants? = values().find { it.text == key }
     }
 }
+package com.donateraja.common
+
 import com.backblaze.b2.client.B2StorageClient
 import com.backblaze.b2.client.B2StorageClientFactory
+import com.backblaze.b2.client.contentSources.B2ByteArrayContentSource
 import com.backblaze.b2.client.contentSources.B2ContentTypes
 import com.backblaze.b2.client.contentSources.B2FileContentSource
 import com.backblaze.b2.client.exceptions.B2Exception
@@ -215,6 +218,7 @@ import com.backblaze.b2.client.structures.B2UploadFileRequest
 import com.donateraja.configuration.BackblazeConfig
 import org.springframework.stereotype.Component
 import java.io.File
+import java.security.MessageDigest
 
 @Component
 class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
@@ -226,6 +230,20 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
             "donate-raja"
         )
     }
+
+    fun uploadFile(fileBytes: ByteArray, fileName: String, contentType: String = B2ContentTypes.B2_AUTO): String {
+        val sha1 = calculateSha1(fileBytes)
+        val contentSource = B2ByteArrayContentSource.builder(fileBytes).setSha1OrNull(sha1)
+            .build()
+        val request = B2UploadFileRequest.builder(backblazeConfig.bucketId, fileName, contentType, contentSource)
+            .build()
+        b2Client.uploadSmallFile(request)
+        return generatePublicUrl(fileName)
+    }
+
+    private fun calculateSha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1")
+        .digest(bytes)
+        .joinToString("") { "%02x".format(it) }
 
     fun uploadFile(filePath: String, fileName: String): String {
         try {
@@ -263,9 +281,7 @@ class BackblazeUtil(private val backblazeConfig: BackblazeConfig) {
         return uploadedUrls
     }
 
-    fun generatePublicUrl(fileName: String): String {
-        return "${backblazeConfig.publicBaseUrl}/$fileName"
-    }
+    fun generatePublicUrl(fileName: String): String = "${backblazeConfig.publicBaseUrl}/$fileName"
 
     fun deleteFile(fileName: String) {
         try {
@@ -672,6 +688,89 @@ class HttpServiceProvider(
 package com.donateraja.common.util
 
 import com.donateraja.common.exception.ServiceException
+import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Component
+import org.springframework.web.multipart.MultipartFile
+
+@Component
+class ImageValidator {
+
+    fun validateUploadType(uploadType: String) {
+        val allowedTypes = setOf("items", "profile", "documents")
+        if (uploadType !in allowedTypes) {
+            throw ServiceException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid upload type. Allowed values: ${allowedTypes.joinToString()}"
+            )
+        }
+    }
+
+    fun validateImageFile(file: MultipartFile, uploadType: String, index: Int?) {
+        val prefix = index?.let { "File #${it + 1}: " } ?: ""
+
+        // Check empty file
+        if (file.isEmpty) {
+            throw ServiceException(HttpStatus.BAD_REQUEST, "${prefix}File is empty")
+        }
+
+        // Validate file size
+        val maxSize = when (uploadType) {
+            "profile" -> 2_000_000
+            "documents" -> 10_000_000
+            else -> 5_000_000 // items and others
+        }
+        if (file.size > maxSize) {
+            throw ServiceException(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "${prefix}File size exceeds ${maxSize / 1_000_000}MB limit"
+            )
+        }
+
+        // Validate content type
+        val allowedTypes = when (uploadType) {
+            "profile" -> setOf("image/jpeg", "image/png")
+            "items" -> setOf("image/jpeg", "image/png", "image/webp")
+            "documents" -> setOf("application/pdf", "text/plain")
+            else -> throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid upload type configuration")
+        }
+
+        val contentType = file.contentType ?: throw ServiceException(
+            HttpStatus.BAD_REQUEST,
+            "${prefix}File type not recognized"
+        )
+
+        if (contentType !in allowedTypes) {
+            throw ServiceException(
+                HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "${prefix}Invalid file type for $uploadType. Allowed: ${allowedTypes.joinToString()}"
+            )
+        }
+
+        // Validate filename
+        val fileName = file.originalFilename ?: throw ServiceException(
+            HttpStatus.BAD_REQUEST,
+            "${prefix}File name is missing"
+        )
+
+        if (fileName.contains("..") || fileName.contains("/")) {
+            throw ServiceException(
+                HttpStatus.BAD_REQUEST,
+                "${prefix}Invalid file name"
+            )
+        }
+    }
+
+    fun getFileExtension(file: MultipartFile): String = file.originalFilename
+        ?.substringAfterLast('.', "")
+        ?.takeIf { it.isNotBlank() }
+        ?: throw ServiceException(
+            HttpStatus.BAD_REQUEST,
+            "File extension is missing or invalid"
+        )
+}
+package com.donateraja.common.util
+
+import com.donateraja.common.exception.ServiceException
 import com.donateraja.configuration.JwtTokenConfig
 import com.donateraja.domain.auth.AuthResponse
 import io.jsonwebtoken.Claims
@@ -805,6 +904,16 @@ class JwtUtil(private val jwtTokenConfig: JwtTokenConfig) {
         val now = Instant.now()
         tokenBlacklist.entries.removeIf { entry -> entry.value.isBefore(now) }
     }
+}
+package com.donateraja.common.util
+
+import org.slf4j.MDC
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
+
+object SecurityContextUtil {
+    fun getUserIdFromContext(): String =
+        MDC.get("user_id") ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "User context not found")
 }
 package com.donateraja.common.util
 
@@ -1078,11 +1187,56 @@ class AuthController(private val authService: AuthService) {
 package com.donateraja.controller
 
 import ApiOperationWithCustomResponses
+import com.donateraja.service.ImageService
+import jakarta.validation.constraints.NotBlank
+import org.springframework.http.MediaType
+import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
+
+@Validated
+@RestController
+@RequestMapping("/api/images")
+class ImageController(private val imageService: ImageService) {
+
+    @PostMapping(
+        value = ["/upload"],
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
+    @ApiOperationWithCustomResponses(
+        summary = "Upload multiple images",
+        description = "Upload images for items or other content. Max 5 files per request, 5MB each.",
+        successSchema = List::class
+    )
+    fun uploadImages(
+        @RequestParam("files") files: List<MultipartFile>,
+        @RequestParam("uploadType") @NotBlank uploadType: String
+    ): List<String> = imageService.uploadImages(files, uploadType)
+
+    @PostMapping(
+        value = ["/upload/profile"],
+        consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
+    )
+    @ApiOperationWithCustomResponses(
+        summary = "Upload profile picture",
+        description = "Upload a single profile picture. Max size 2MB.",
+        successSchema = String::class
+    )
+    fun uploadProfilePicture(@RequestParam("file") file: MultipartFile): String = imageService.uploadProfilePicture(file)
+}
+package com.donateraja.controller
+
+import ApiOperationWithCustomResponses
 import com.donateraja.annotation.RequireUser
 import com.donateraja.domain.item.ItemCreateDTO
 import com.donateraja.domain.item.ItemResponseDTO
 import com.donateraja.domain.item.ItemStatusDTO
 import com.donateraja.domain.item.ItemUpdateDTO
+import com.donateraja.entity.constants.Category
+import com.donateraja.entity.constants.DonationOrRent
 import com.donateraja.service.ItemService
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
@@ -1160,8 +1314,8 @@ class ItemController(private val itemService: ItemService) {
     )
     fun searchItemsByPincode(
         @RequestParam pincode: String,
-        @RequestParam(required = false) category: String?,
-        @RequestParam(required = false) donationOrRent: String?
+        @RequestParam(required = false) category: Category?,
+        @RequestParam(required = false) donationOrRent: DonationOrRent?
     ): ResponseEntity<List<ItemResponseDTO>> =
         ResponseEntity.ok(itemService.searchItemsByPincode(pincode, category, donationOrRent))
 }
@@ -1407,7 +1561,6 @@ package com.donateraja.domain.item
 import com.donateraja.entity.constants.Category
 import com.donateraja.entity.constants.Condition
 import com.donateraja.entity.constants.DonationOrRent
-import com.donateraja.entity.user.User
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -1452,7 +1605,13 @@ class ItemCreateDTO {
 
     @JsonProperty("user_id")
     @NotNull(message = "user cannot be null")
-    var user: User? = null
+    var userId: Long? = null
+
+    @JsonProperty("image_urls")
+    var imageUrls: List<String> = emptyList()
+
+    @JsonProperty("tags")
+    var tags: List<String> = emptyList()
 
     constructor()
 
@@ -1465,7 +1624,7 @@ class ItemCreateDTO {
         pincode: String,
         category: Category,
         donationOrRent: DonationOrRent,
-        user: User
+        userId: Long
     ) {
         this.itemName = itemName
         this.description = description
@@ -1475,7 +1634,9 @@ class ItemCreateDTO {
         this.pincode = pincode
         this.category = category
         this.donationOrRent = donationOrRent
-        this.user = user
+        this.userId = userId
+        this.imageUrls = imageUrls
+        this.tags = tags
     }
 }
 package com.donateraja.domain.item
@@ -1487,46 +1648,23 @@ import com.donateraja.entity.constants.ItemStatus
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
-class ItemResponseDTO {
-
-    @JsonProperty("id")
-    var id: Long = 0
-
-    @JsonProperty("item_name")
-    var itemName: String = ""
-
-    @JsonProperty("description")
-    var description: String = ""
-
-    @JsonProperty("condition")
-    var condition: Condition = Condition.NEW
-
-    @JsonProperty("price")
-    var price: Double = 0.0
-
-    @JsonProperty("location")
-    var location: String = ""
-
-    @JsonProperty("pincode")
-    var pincode: String = ""
-
-    @JsonProperty("category")
-    var category: Category = Category.ELECTRONICS
-
-    @JsonProperty("donation_or_rent")
-    var donationOrRent: DonationOrRent = DonationOrRent.RENT
-
-    @JsonProperty("status")
-    var status: ItemStatus = ItemStatus.AVAILABLE
-
-    @JsonProperty("created_at")
-    var createdAt: LocalDateTime = LocalDateTime.now()
-
-    @JsonProperty("updated_at")
-    var updatedAt: LocalDateTime = LocalDateTime.now()
-
-    constructor()
-
+data class ItemResponseDTO(
+    @JsonProperty("id") val id: Long,
+    @JsonProperty("item_name") val itemName: String,
+    @JsonProperty("description") val description: String,
+    @JsonProperty("condition") val condition: Condition,
+    @JsonProperty("price") val price: Double,
+    @JsonProperty("location") val location: String,
+    @JsonProperty("pincode") val pincode: String,
+    @JsonProperty("category") val category: Category,
+    @JsonProperty("donation_or_rent") val donationOrRent: DonationOrRent,
+    @JsonProperty("status") val status: ItemStatus,
+    @JsonProperty("created_at") val createdAt: LocalDateTime,
+    @JsonProperty("updated_at") val updatedAt: LocalDateTime,
+    @JsonProperty("image_urls") val imageUrls: List<String>,
+    @JsonProperty("tags") val tags: List<String>
+) {
+    // Secondary constructor for compatibility (if needed)
     constructor(
         id: Long,
         itemName: String,
@@ -1540,20 +1678,10 @@ class ItemResponseDTO {
         status: ItemStatus,
         createdAt: LocalDateTime,
         updatedAt: LocalDateTime
-    ) {
-        this.id = id
-        this.itemName = itemName
-        this.description = description
-        this.condition = condition
-        this.price = price
-        this.location = location
-        this.pincode = pincode
-        this.category = category
-        this.donationOrRent = donationOrRent
-        this.status = status
-        this.createdAt = createdAt
-        this.updatedAt = updatedAt
-    }
+    ) : this(
+        id, itemName, description, condition, price, location, pincode,
+        category, donationOrRent, status, createdAt, updatedAt, emptyList(), emptyList()
+    )
 }
 package com.donateraja.domain.item
 
@@ -1745,6 +1873,37 @@ class ItemRequestStatusDTO {
     constructor(status: RequestStatus) {
         this.status = status
     }
+}
+package com.donateraja.domain.user
+
+class AddressResponseDTO(val street: String, val city: String, val state: String, val pincode: String, val country: String)
+package com.donateraja.domain.user
+
+import com.fasterxml.jackson.annotation.JsonProperty
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+
+class AddressUpdateDTO {
+    @JsonProperty("street")
+    @NotBlank(message = "street cannot be blank")
+    var street: String? = null
+
+    @JsonProperty("city")
+    @NotBlank(message = "city cannot be blank")
+    var city: String? = null
+
+    @JsonProperty("state")
+    @NotBlank(message = "state cannot be blank")
+    var state: String? = null
+
+    @JsonProperty("pincode")
+    @NotBlank(message = "pincode cannot be blank")
+    @Pattern(regexp = "^[1-9][0-9]{5}$", message = "Invalid pincode format")
+    var pincode: String? = null
+
+    @JsonProperty("country")
+    @NotBlank(message = "country cannot be blank")
+    var country: String? = null
 }
 package com.donateraja.domain.user
 
@@ -2194,6 +2353,7 @@ class ItemReview(
 )
 package com.donateraja.entity.item
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -2202,7 +2362,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.LocalDateTime
-
 @Entity
 @Table(name = "item_tags")
 data class ItemTag(
@@ -2211,10 +2370,11 @@ data class ItemTag(
     val tagId: Long? = null,
 
     @ManyToOne
-    @JoinColumn(name = "item_id")
+    @JoinColumn(name = "item_id", nullable = false)
     val item: Item,
 
-    val tag: String,
+    @Column(nullable = false)
+    val tag: String, // ✅ Ensure this exists
 
     val createdAt: LocalDateTime
 )
@@ -2495,7 +2655,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -2542,7 +2702,7 @@ class User(
     var gender: Gender = Gender.PREFER_NOT_TO_SAY,
 
     @Column(name = "dob")
-    var dob: Instant? = null,
+    var dob: LocalDate? = null,
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -2608,7 +2768,7 @@ class User(
     constructor() : this(
         0, "", "", "", "",
         null, null, null, "",
-        Gender.PREFER_NOT_TO_SAY, Instant.now(), UserStatus.ACTIVE,
+        Gender.PREFER_NOT_TO_SAY, LocalDate.now(), UserStatus.ACTIVE,
         false, false, null,
         null, LocalDateTime.now(), LocalDateTime.now(), null
     )
@@ -2783,9 +2943,10 @@ data class UserLoginDto(
 )
 package com.donateraja.model.user
 
+import com.donateraja.domain.user.AddressResponseDTO
 import com.donateraja.entity.constants.Gender
 import com.fasterxml.jackson.annotation.JsonFormat
-import java.time.Instant
+import java.time.LocalDate
 
 data class UserProfileDto(
     val firstName: String,
@@ -2796,7 +2957,8 @@ data class UserProfileDto(
     val gender: Gender,
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    val dob: Instant
+    val dob: LocalDate?,
+    val address: AddressResponseDTO?
 )
 package com.donateraja.model.user
 
@@ -2817,7 +2979,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface AddressRepository : JpaRepository<Address, Long> {
-    fun findByUserId(userId: Long): List<Address>
+    fun findByUserId(userId: Long): Address
 }
 package com.donateraja.repository
 
@@ -2846,6 +3008,9 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ItemImageRepository : JpaRepository<ItemImage, Long> {
     fun findByItemId(itemId: Long): List<ItemImage>
+
+    // ItemImageRepository.kt
+    fun deleteByItemId(itemId: Long)
 }
 package com.donateraja.repository
 
@@ -2925,7 +3090,9 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TagRepository : JpaRepository<ItemTag, Long> {
-    fun findByName(name: String): ItemTag?
+    fun deleteByItemId(itemId: Long)
+    fun findByItemId(itemId: Long): List<ItemTag>
+    fun findByTag(tag: String): ItemTag?
 }
 package com.donateraja.repository
 
@@ -2970,6 +3137,15 @@ interface AuthService {
     fun logoutUser(token: String): String
     fun verifyEmail(token: String)
     fun resendVerificationEmail(email: String)
+}
+package com.donateraja.service
+
+import org.springframework.web.multipart.MultipartFile
+
+interface ImageService {
+    fun uploadImages(files: List<MultipartFile>, uploadType: String): List<String>
+    fun uploadProfilePicture(file: MultipartFile): String
+    fun uploadImages(files: List<MultipartFile>): List<String>
 }
 package com.donateraja.service.impl
 
@@ -3091,6 +3267,77 @@ class AuthServiceImpl(
 }
 package com.donateraja.service.impl
 
+import com.backblaze.b2.client.contentSources.B2ContentTypes
+import com.donateraja.common.BackblazeUtil
+import com.donateraja.common.exception.ServiceException
+import com.donateraja.common.util.ImageValidator
+import com.donateraja.service.ImageService
+import org.slf4j.MDC
+import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
+import java.util.UUID
+
+@Service
+class ImageServiceImpl(private val backblazeUtil: BackblazeUtil, private val imageValidator: ImageValidator) : ImageService {
+
+    override fun uploadImages(files: List<MultipartFile>, uploadType: String): List<String> {
+        val userId = getUserIdFromContext()
+        return files.mapIndexed { index, file ->
+            // Use mapIndexed for index
+            imageValidator.validateImageFile(
+                file = file,
+                uploadType = uploadType,
+                index = index
+            )
+            backblazeUtil.uploadFile(
+                fileBytes = file.bytes,
+                fileName = "users/$userId/${UUID.randomUUID()}.${file.extension}",
+                contentType = file.contentType ?: B2ContentTypes.B2_AUTO
+            )
+        }
+    }
+
+    override fun uploadImages(files: List<MultipartFile>): List<String> {
+        val userId = getUserIdFromContext()
+        return files.mapIndexed { index, file ->
+            // Use mapIndexed for index
+            imageValidator.validateImageFile(
+                file = file,
+                uploadType = "items", // Default upload type
+                index = index
+            )
+            backblazeUtil.uploadFile(
+                fileBytes = file.bytes,
+                fileName = "users/$userId/${UUID.randomUUID()}.${file.extension}",
+                contentType = file.contentType ?: B2ContentTypes.B2_AUTO
+            )
+        }
+    }
+
+    override fun uploadProfilePicture(file: MultipartFile): String {
+        val userId = getUserIdFromContext()
+        imageValidator.validateImageFile(
+            file = file,
+            uploadType = "profile", // Explicit upload type
+            index = null // No index for single file
+        )
+        return backblazeUtil.uploadFile(
+            fileBytes = file.bytes,
+            fileName = "users/$userId/profile/${UUID.randomUUID()}.${file.extension}",
+            contentType = file.contentType ?: "image/jpeg"
+        )
+    }
+
+    private fun getUserIdFromContext(): String = MDC.get("user_id")
+        ?: throw ServiceException(HttpStatus.UNAUTHORIZED, "User context not found")
+
+    private val MultipartFile.extension: String
+        get() = originalFilename?.substringAfterLast('.', "")
+            ?: throw ServiceException(HttpStatus.BAD_REQUEST, "Invalid file extension")
+}
+package com.donateraja.service.impl
+
 import com.donateraja.domain.request.ItemRequestCreateDTO
 import com.donateraja.domain.request.ItemRequestResponseDTO
 import com.donateraja.domain.request.ItemRequestStatusDTO
@@ -3168,67 +3415,163 @@ class ItemRequestServiceImpl(
 }
 package com.donateraja.service.impl
 
+import com.donateraja.common.exception.ServiceException
 import com.donateraja.domain.item.ItemCreateDTO
 import com.donateraja.domain.item.ItemResponseDTO
 import com.donateraja.domain.item.ItemStatusDTO
 import com.donateraja.domain.item.ItemUpdateDTO
 import com.donateraja.entity.constants.Category
 import com.donateraja.entity.constants.DonationOrRent
+import com.donateraja.entity.item.Item
+import com.donateraja.entity.item.ItemImage
+import com.donateraja.entity.item.ItemTag
+import com.donateraja.entity.user.User
+import com.donateraja.repository.ItemImageRepository
 import com.donateraja.repository.ItemRepository
 import com.donateraja.repository.TagRepository
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.ItemService
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
+@Transactional
 class ItemServiceImpl(
     private val itemRepository: ItemRepository,
     private val userRepository: UserRepository,
+    private val itemImageRepository: ItemImageRepository,
     private val tagRepository: TagRepository
 ) : ItemService {
+
     override fun postItem(itemCreateDTO: ItemCreateDTO): ItemResponseDTO {
-        TODO("Not yet implemented")
+        val user = getUserById(itemCreateDTO.userId)
+        val item = createItemEntity(itemCreateDTO, user)
+        val savedItem = itemRepository.save(item)
+
+        saveItemImages(savedItem, itemCreateDTO.imageUrls)
+        saveItemTags(savedItem, itemCreateDTO.tags)
+
+        return mapToResponseDTO(savedItem)
     }
 
     override fun getItem(itemId: Long): ItemResponseDTO {
-        TODO("Not yet implemented")
+        val item = itemRepository.findById(itemId)
+            .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Item not found") }
+        return mapToResponseDTO(item)
     }
 
     override fun updateItem(itemId: Long, itemUpdateDTO: ItemUpdateDTO): ItemResponseDTO {
-        TODO("Not yet implemented")
+        val item = getItemEntity(itemId)
+
+        itemUpdateDTO.itemName?.let { item.itemName = it }
+        itemUpdateDTO.description?.let { item.description = it }
+        itemUpdateDTO.price?.let { item.price = it }
+        item.updatedAt = LocalDateTime.now()
+
+        val updatedItem = itemRepository.save(item)
+        return mapToResponseDTO(updatedItem)
     }
 
     override fun deleteItem(itemId: Long) {
-        TODO("Not yet implemented")
+        if (!itemRepository.existsById(itemId)) {
+            throw ServiceException(HttpStatus.NOT_FOUND, "Item not found")
+        }
+        itemImageRepository.deleteByItemId(itemId)
+        tagRepository.deleteByItemId(itemId)
+        itemRepository.deleteById(itemId)
     }
 
     override fun updateItemStatus(itemId: Long, itemStatusDTO: ItemStatusDTO): ItemResponseDTO {
-        TODO("Not yet implemented")
+        val item = getItemEntity(itemId)
+        item.status = itemStatusDTO.status ?: throw ServiceException(HttpStatus.BAD_REQUEST, "Status is required")
+        item.updatedAt = LocalDateTime.now()
+        return mapToResponseDTO(itemRepository.save(item))
     }
 
     override fun searchItemsByPincode(
         pincode: String,
         category: Category?,
         donationOrRent: DonationOrRent?
-    ): List<ItemResponseDTO> {
-        TODO("Not yet implemented")
+    ): List<ItemResponseDTO> = itemRepository.findByPincodeAndFilters(pincode, category, donationOrRent)
+        .map { mapToResponseDTO(it) }
+
+    override fun getAllItems(category: Category?, donationOrRent: DonationOrRent?, location: String?): List<ItemResponseDTO> =
+        itemRepository.findAllByFilters(category, donationOrRent, location)
+            .map { mapToResponseDTO(it) }
+
+    override fun searchItems(query: String, category: Category?, donationOrRent: DonationOrRent?): List<ItemResponseDTO> =
+        itemRepository.searchByQuery("%$query%", category, donationOrRent)
+            .map { mapToResponseDTO(it) }
+
+    private fun getUserById(userId: Long?): User =
+        userRepository.findById(userId ?: throw ServiceException(HttpStatus.BAD_REQUEST, "User ID required"))
+            .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "User not found") }
+
+    private fun createItemEntity(dto: ItemCreateDTO, user: User): Item = Item(
+        itemName = requireNotNull(dto.itemName) { "Item name required" },
+        description = requireNotNull(dto.description) { "Description required" },
+        condition = requireNotNull(dto.condition) { "Condition required" },
+        price = requireNotNull(dto.price) { "Price required" },
+        location = requireNotNull(dto.location) { "Location required" },
+        pincode = requireNotNull(dto.pincode) { "Pincode required" },
+        category = requireNotNull(dto.category) { "Category required" },
+        donationOrRent = requireNotNull(dto.donationOrRent) { "Donation/Rent type required" },
+        user = user
+    )
+
+    private fun saveItemImages(item: Item, imageUrls: List<String>) {
+        imageUrls.forEach { url ->
+            itemImageRepository.save(ItemImage(item = item, imageUrl = url))
+        }
     }
 
-    override fun getAllItems(category: Category?, donationOrRent: DonationOrRent?, location: String?): List<ItemResponseDTO> {
-        TODO("Not yet implemented")
+    private fun saveItemTags(item: Item, tags: List<String>) {
+        tags.forEach { tagName ->
+            val cleanedTag = tagName.trim()
+            if (cleanedTag.isNotEmpty()) {
+                tagRepository.save(
+                    ItemTag(
+                        item = item,
+                        tag = cleanedTag,
+                        createdAt = LocalDateTime.now() // Add createdAt
+                    )
+                )
+            }
+        }
     }
 
-    override fun searchItems(query: String, category: Category?, donationOrRent: DonationOrRent?): List<ItemResponseDTO> {
-        TODO("Not yet implemented")
-    }
+    private fun getItemEntity(itemId: Long): Item = itemRepository.findById(itemId)
+        .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Item not found") }
+
+    private fun mapToResponseDTO(item: Item): ItemResponseDTO = ItemResponseDTO(
+        id = item.id,
+        itemName = item.itemName,
+        description = item.description,
+        condition = item.condition,
+        price = item.price,
+        location = item.location,
+        pincode = item.pincode,
+        category = item.category,
+        donationOrRent = item.donationOrRent,
+        status = item.status,
+        createdAt = item.createdAt,
+        updatedAt = item.updatedAt,
+        imageUrls = itemImageRepository.findByItemId(item.id).map { it.imageUrl },
+        tags = tagRepository.findByItemId(item.id).map { it.tag }
+    )
 }
 package com.donateraja.service.impl
 
 import com.donateraja.common.exception.ServiceException
+import com.donateraja.domain.user.AddressResponseDTO
+import com.donateraja.entity.user.Address
 import com.donateraja.entity.user.User
 import com.donateraja.model.user.ChangePasswordDto
 import com.donateraja.model.user.UserProfileDto
 import com.donateraja.model.user.UserRegistrationResponse
+import com.donateraja.repository.AddressRepository
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.UserService
 import org.slf4j.LoggerFactory
@@ -3236,26 +3579,36 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.time.Instant
 import java.util.UUID
 
 @Service
-class UserServiceImpl(private val userRepository: UserRepository, private val passwordEncoder: PasswordEncoder) : UserService {
+class UserServiceImpl(
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder,
+    private val addressRepository: AddressRepository
+) : UserService {
 
     private val logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
 
     override fun getCurrentUserProfile(): UserProfileDto {
         val user = getCurrentUser()
-        return mapToUserProfileDto(user)
+        val address = addressRepository.findByUserId(user.id) // ✅ Fetch address
+        return mapToUserProfileDto(user, address)
     }
 
     override fun updateUserProfile(userUpdateDTO: UserProfileDto): UserProfileDto {
         val user = getCurrentUser()
+
+        // ✅ Update user details
         user.firstName = userUpdateDTO.firstName
         user.lastName = userUpdateDTO.lastName
         user.phoneNumber = userUpdateDTO.phoneNumber
         userRepository.save(user)
-        return mapToUserProfileDto(user)
+
+        // ✅ Fetch updated address before mapping response
+        val address = addressRepository.findByUserId(user.id)
+
+        return mapToUserProfileDto(user, address)
     }
 
     override fun changePassword(changePasswordDto: ChangePasswordDto) {
@@ -3271,14 +3624,19 @@ class UserServiceImpl(private val userRepository: UserRepository, private val pa
         val user = getCurrentUser()
         user.profilePicture = "/uploads/${UUID.randomUUID()}_${file.originalFilename}"
         userRepository.save(user)
-        return mapToUserProfileDto(user)
+
+        // ✅ Fetch updated address before returning profile
+        val address = addressRepository.findByUserId(user.id)
+
+        return mapToUserProfileDto(user, address)
     }
 
     override fun getUserProfile(userId: Long): UserProfileDto {
         val user = userRepository.findById(userId).orElseThrow {
             throw ServiceException(HttpStatus.NOT_FOUND, "User with ID $userId not found")
         }
-        return mapToUserProfileDto(user)
+        val address = addressRepository.findByUserId(user.id) // ✅ Fetch address
+        return mapToUserProfileDto(user, address)
     }
 
     override fun resendVerificationEmail(userId: Long): UserRegistrationResponse {
@@ -3293,14 +3651,24 @@ class UserServiceImpl(private val userRepository: UserRepository, private val pa
 
     private fun getCurrentUser(): User =
         userRepository.findByEmail("test@example.com") ?: throw ServiceException(HttpStatus.NOT_FOUND, "User not found")
-    private fun mapToUserProfileDto(user: User) = UserProfileDto(
+
+    private fun mapToUserProfileDto(user: User, address: Address?) = UserProfileDto(
         firstName = user.firstName ?: "",
         lastName = user.lastName ?: "",
         phoneNumber = user.phoneNumber,
         profilePicture = user.profilePicture,
         userBio = user.userBio ?: "",
         gender = user.gender,
-        dob = user.dob ?: Instant.now()
+        dob = user.dob,
+        address = address?.let {
+            AddressResponseDTO(
+                street = it.street,
+                city = it.city,
+                state = it.state,
+                pincode = it.pincode,
+                country = it.country ?: ""
+            )
+        }
     )
 }
 package com.donateraja.service

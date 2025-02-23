@@ -71,7 +71,7 @@ class User(
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    var userStatus: UserStatus = UserStatus.ACTIVE,
+    var status: UserStatus = UserStatus.ACTIVE,
 
     @Column(name = "is_email_verified")
     var isEmailVerified: Boolean = false,
@@ -112,11 +112,11 @@ class User(
 
     override fun isAccountNonExpired(): Boolean = true
 
-    override fun isAccountNonLocked(): Boolean = userStatus == UserStatus.ACTIVE
+    override fun isAccountNonLocked(): Boolean = status == UserStatus.ACTIVE
 
     override fun isCredentialsNonExpired(): Boolean = true
 
-    override fun isEnabled(): Boolean = userStatus == UserStatus.ACTIVE
+    override fun isEnabled(): Boolean = status == UserStatus.ACTIVE
 
     fun updatePassword(newPassword: String) {
         this.password = newPassword

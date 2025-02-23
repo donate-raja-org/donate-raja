@@ -1,9 +1,10 @@
-package com.donateraja.domain.item
+package com.donateraja.domain.admin
 
 import com.donateraja.entity.constants.Category
 import com.donateraja.entity.constants.Condition
 import com.donateraja.entity.constants.DonationOrRent
 import com.donateraja.entity.constants.ItemStatus
+import com.donateraja.entity.item.Item
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
@@ -20,25 +21,25 @@ data class ItemResponseDTO(
     @JsonProperty("status") val status: ItemStatus,
     @JsonProperty("created_at") val createdAt: LocalDateTime,
     @JsonProperty("updated_at") val updatedAt: LocalDateTime,
-    @JsonProperty("image_urls") val imageUrls: List<String>,
-    @JsonProperty("tags") val tags: List<String>
+    @JsonProperty("images") val images: List<String> = emptyList(),
+    @JsonProperty("tags") val tags: List<String> = emptyList()
 ) {
-    // Secondary constructor for compatibility (if needed)
-    constructor(
-        id: Long,
-        itemName: String,
-        description: String,
-        condition: Condition,
-        price: Double,
-        location: String,
-        pincode: String,
-        category: Category,
-        donationOrRent: DonationOrRent,
-        status: ItemStatus,
-        createdAt: LocalDateTime,
-        updatedAt: LocalDateTime
-    ) : this(
-        id, itemName, description, condition, price, location, pincode,
-        category, donationOrRent, status, createdAt, updatedAt, emptyList(), emptyList()
-    )
+    companion object {
+        fun fromEntity(item: Item, images: List<String>, tags: List<String>): ItemResponseDTO = ItemResponseDTO(
+            id = item.id,
+            itemName = item.itemName,
+            description = item.description,
+            condition = item.condition,
+            price = item.price,
+            location = item.location,
+            pincode = item.pincode,
+            category = item.category,
+            donationOrRent = item.donationOrRent,
+            status = item.status,
+            createdAt = item.createdAt,
+            updatedAt = item.updatedAt,
+            images = images,
+            tags = tags
+        )
+    }
 }
