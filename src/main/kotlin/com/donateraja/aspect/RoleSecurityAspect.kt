@@ -47,7 +47,7 @@ class RoleSecurityAspect(private val request: HttpServletRequest) {
         }
 
         val authorities = authentication.authorities.map { it.authority }
-        if (!authorities.contains("ROLE_ADMIN") && !authorities.contains("ADMIN")) {
+        if (!authorities.contains("ADMIN")) {
             logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Forbidden: Admin role required")
         }
@@ -65,11 +65,7 @@ class RoleSecurityAspect(private val request: HttpServletRequest) {
         }
 
         val authorities = authentication.authorities.map { it.authority }
-        if (!authorities.contains("ROLE_USER") &&
-            !authorities.contains("USER") &&
-            !authorities.contains("ROLE_ADMIN") &&
-            !authorities.contains("ADMIN")
-        ) {
+        if (!authorities.contains("USER") && !authorities.contains("ADMIN")) {
             logger.warn("Forbidden access attempt by user: ${authentication.name} from IP: ${request.remoteAddr}")
             throw AccessDeniedException("Forbidden: Access requires User or Admin role")
         }

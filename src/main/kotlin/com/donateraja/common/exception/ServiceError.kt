@@ -8,7 +8,7 @@ import java.time.Instant
 
 class ServiceError {
 
-    @JsonProperty("errorCode")
+    @JsonProperty("error_code")
     var errorCode: Int? = null
 
     @Schema(example = "Error message")
@@ -18,11 +18,11 @@ class ServiceError {
     var description: String? = null
 
     @Schema(example = "transaction id to identify the request")
-    @JsonProperty("transactionId")
+    @JsonProperty("transaction_id")
     var transactionId: String? = null
 
     @JsonProperty("timestamp")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS]'Z'")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     var timestamp: Instant = Instant.now()
 
     constructor(

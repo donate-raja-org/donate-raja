@@ -1,68 +1,109 @@
 package com.donateraja.service.impl
+
+import com.donateraja.common.exception.ServiceException
+import com.donateraja.domain.user.AddressResponseDTO
+import com.donateraja.entity.user.Address
+import com.donateraja.entity.user.User
 import com.donateraja.model.user.ChangePasswordDto
-import com.donateraja.model.user.ResetPasswordDto
 import com.donateraja.model.user.UserProfileDto
+import com.donateraja.model.user.UserRegistrationResponse
+import com.donateraja.repository.AddressRepository
+import com.donateraja.repository.UserRepository
+import com.donateraja.service.UserService
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.util.UUID
 
 @Service
-class UserServiceImpl {
+class UserServiceImpl(
+    private val userRepository: UserRepository,
+    private val passwordEncoder: PasswordEncoder,
+    private val addressRepository: AddressRepository
+) : UserService {
 
-    // Placeholder function to get user profile (to be replaced with actual implementation)
-    fun getUserProfile(userId: Long): UserProfileDto {
-        // Here, you would normally fetch user details from the database
-        return UserProfileDto(userId, "", "", "", "", "", "")
+    private val logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
+
+    override fun getCurrentUserProfile(): UserProfileDto {
+        val user = getCurrentUser()
+        val address = addressRepository.findByUserId(user.id) // ✅ Fetch address
+        return mapToUserProfileDto(user, address)
     }
 
-    // Placeholder function to update user profile (to be replaced with actual implementation)
-    fun updateUserProfile(userId: Long, userProfileDto: UserProfileDto): UserProfileDto {
-        // Here, you would normally update the user details in the database
-        return UserProfileDto(userId, "", "", "", "", "", "")
+    override fun updateUserProfile(userUpdateDTO: UserProfileDto): UserProfileDto {
+        val user = getCurrentUser()
+
+        // ✅ Update user details
+        user.firstName = userUpdateDTO.firstName
+        user.lastName = userUpdateDTO.lastName
+        user.phoneNumber = userUpdateDTO.phoneNumber
+        userRepository.save(user)
+
+        // ✅ Fetch updated address before mapping response
+        val address = addressRepository.findByUserId(user.id)
+
+        return mapToUserProfileDto(user, address)
     }
 
-    // Change password functionality
-    fun changePassword(userId: Long, changePasswordDto: ChangePasswordDto) {
-        // Logic to change the user's password in the database
-    }
-
-    // Reset password functionality (not implemented)
-    fun resetPassword(userId: Long, resetPasswordDto: ResetPasswordDto) {
-        // Logic to reset the user's password
-    }
-
-    // Add admin role functionality (to be implemented)
-    fun addAdminRole(userId: Long) {
-        // Logic to add an admin role to the user
-    }
-
-    // Function to update profile picture
-    fun updateProfilePicture(userId: Long, file: MultipartFile): UserProfileDto {
-        // Validate file type and size if necessary (e.g., check for image file)
-        if (file.isEmpty) {
-            throw IllegalArgumentException("File cannot be empty")
+    override fun changePassword(changePasswordDto: ChangePasswordDto) {
+        val user = getCurrentUser()
+        if (!passwordEncoder.matches(changePasswordDto.currentPassword, user.password)) {
+            throw ServiceException(HttpStatus.BAD_REQUEST, "Current password is incorrect")
         }
-
-        // Generate a unique filename based on the user ID and current timestamp
-        val fileName = "${userId}_${System.currentTimeMillis()}.jpg"
-        val uploadDir = Paths.get("uploads/profile-pictures")
-
-        // Ensure the directory exists
-        if (!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir)
-        }
-
-        // Create file path
-        val filePath = uploadDir.resolve(fileName)
-
-        // Save the file
-        file.inputStream.use { input ->
-            Files.copy(input, filePath)
-        }
-
-        // Return the updated user profile with new profile picture filename
-        // In a real-world scenario, you would save this information in the database
-        return UserProfileDto(userId, "", "", "", "", "", "")
+        user.updatePassword(passwordEncoder.encode(changePasswordDto.newPassword))
+        userRepository.save(user)
     }
+
+    override fun updateProfilePicture(file: MultipartFile): UserProfileDto {
+        val user = getCurrentUser()
+        user.profilePicture = "/uploads/${UUID.randomUUID()}_${file.originalFilename}"
+        userRepository.save(user)
+
+        // ✅ Fetch updated address before returning profile
+        val address = addressRepository.findByUserId(user.id)
+
+        return mapToUserProfileDto(user, address)
+    }
+
+    override fun getUserProfile(userId: Long): UserProfileDto {
+        val user = userRepository.findById(userId).orElseThrow {
+            throw ServiceException(HttpStatus.NOT_FOUND, "User with ID $userId not found")
+        }
+        val address = addressRepository.findByUserId(user.id) // ✅ Fetch address
+        return mapToUserProfileDto(user, address)
+    }
+
+    override fun resendVerificationEmail(userId: Long): UserRegistrationResponse {
+        val user = userRepository.findById(userId).orElseThrow {
+            throw ServiceException(HttpStatus.NOT_FOUND, "User not found")
+        }
+        user.verificationCode = UUID.randomUUID().toString()
+        userRepository.save(user)
+        logger.info("Resent verification email to ${user.email}")
+        return UserRegistrationResponse("Verification email sent", user.id)
+    }
+
+    private fun getCurrentUser(): User =
+        userRepository.findByEmail("test@example.com") ?: throw ServiceException(HttpStatus.NOT_FOUND, "User not found")
+
+    private fun mapToUserProfileDto(user: User, address: Address?) = UserProfileDto(
+        firstName = user.firstName ?: "",
+        lastName = user.lastName ?: "",
+        phoneNumber = user.phoneNumber,
+        profilePicture = user.profilePicture,
+        userBio = user.userBio ?: "",
+        gender = user.gender,
+        dob = user.dob,
+        address = address?.let {
+            AddressResponseDTO(
+                street = it.street,
+                city = it.city,
+                state = it.state,
+                pincode = it.pincode,
+                country = it.country ?: ""
+            )
+        }
+    )
 }

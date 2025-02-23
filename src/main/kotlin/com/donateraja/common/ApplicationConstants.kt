@@ -1,4 +1,4 @@
-package com.donateraja.common.domain
+package com.donateraja.common
 
 enum class ApplicationConstants(val text: String) {
     TRANSACTION_ID("transaction.id"),

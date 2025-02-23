@@ -6,4 +6,5 @@ data class AuthResponse(
     val roles: List<String>? = null,
     val claims: Map<String, Any>? = null,
     val userId: String? = null
+//    val tokenType: String
 )

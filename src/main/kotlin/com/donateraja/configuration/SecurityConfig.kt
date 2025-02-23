@@ -1,7 +1,7 @@
 package com.donateraja.configuration
 
-import com.donateraja.common.util.JwtAuthenticationFilter
-import com.donateraja.service.CustomUserDetailsService
+import com.donateraja.common.filter.JwtAuthenticationFilter
+import com.donateraja.common.util.UserLookupUtil
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -20,7 +20,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilter) {
+class SecurityConfig(
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
+//    , private val validationFilter: ValidationFilter
+) {
 
     companion object {
         private val PUBLIC_URLS = arrayOf(
@@ -46,16 +49,14 @@ class SecurityConfig(private val jwtAuthenticationFilter: JwtAuthenticationFilte
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
+//            .addFilterBefore(validationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
 
     @Bean
-    fun authenticationProvider(
-        userDetailsService: CustomUserDetailsService,
-        passwordEncoder: PasswordEncoder
-    ): AuthenticationProvider {
+    fun authenticationProvider(userDetailsService: UserLookupUtil, passwordEncoder: PasswordEncoder): AuthenticationProvider {
         val authProvider = DaoAuthenticationProvider()
         authProvider.setUserDetailsService(userDetailsService)
         authProvider.setPasswordEncoder(passwordEncoder)

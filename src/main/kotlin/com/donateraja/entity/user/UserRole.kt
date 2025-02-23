@@ -21,6 +21,7 @@ import jakarta.persistence.Table
 class UserRole(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id", nullable = false, updatable = false)
     val id: Long = 0,
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,5 +33,5 @@ class UserRole(
     @Column(nullable = false)
     var role: Role
 ) {
-    constructor() : this(0, User(), Role.ROLE_USER) // ✅ Default constructor for Hibernate
+    constructor() : this(0, User(), Role.USER) // ✅ Default constructor for Hibernate
 }

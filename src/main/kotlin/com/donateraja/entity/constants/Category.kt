@@ -1,9 +1,25 @@
 package com.donateraja.entity.constants
 
 enum class Category {
-    FURNITURE,
     ELECTRONICS,
+    FURNITURE,
+    BOOKS,
     CLOTHING,
+    HOME_APPLIANCES,
+    SPORTS,
     TOYS,
-    MISC
+    VEHICLES,
+    MUSIC_INSTRUMENTS,
+    HEALTH_CARE,
+    OFFICE_SUPPLIES,
+    ART_CRAFTS,
+    PET_SUPPLIES,
+    BABY_PRODUCTS,
+    JEWELRY,
+    FOOTWEAR,
+    GARDENING,
+    BEAUTY_CARE,
+    KITCHENWARE,
+    EDUCATIONAL,
+    MISCELLANEOUS
 }

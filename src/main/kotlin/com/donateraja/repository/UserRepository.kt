@@ -9,9 +9,11 @@ import org.springframework.stereotype.Repository
 @Repository
 interface UserRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
+
+//    fun findByEmail(email: String): Optional<User>
     fun findByPhoneNumber(phoneNumber: String): User?
+
     fun existsByEmail(email: String): Boolean
-//    fun findById(userId: Long): Optional<User>
 
     @Query("SELECT u FROM User u WHERE u.email = :input OR u.phoneNumber = :input OR u.id = :input")
     fun findByAnyIdentifier(@Param("input") input: String): User?

@@ -1,6 +1,7 @@
-package com.donateraja.common.util
+package com.donateraja.common.filter
 
-import com.donateraja.service.CustomUserDetailsService
+import com.donateraja.common.util.JwtUtil
+import com.donateraja.common.util.UserLookupUtil
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-class JwtAuthenticationFilter(private val jwtUtil: JwtUtil, private val userDetailsService: CustomUserDetailsService) :
+class JwtAuthenticationFilter(private val jwtUtil: JwtUtil, private val userDetailsService: UserLookupUtil) :
     OncePerRequestFilter() {
 
     @Throws(ServletException::class, java.io.IOException::class)

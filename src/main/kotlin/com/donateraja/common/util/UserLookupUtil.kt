@@ -1,14 +1,14 @@
-package com.donateraja.service
+package com.donateraja.common.util
 
 import com.donateraja.entity.user.User
 import com.donateraja.repository.UserRepository
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 
-@Service
-class CustomUserDetailsService(private val userRepository: UserRepository) : UserDetailsService {
+@Component
+class UserLookupUtil(private val userRepository: UserRepository) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
         val user: User? = when {

@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ItemImageRepository : JpaRepository<ItemImage, Long> {
     fun findByItemId(itemId: Long): List<ItemImage>
+
+    // ItemImageRepository.kt
+    fun deleteByItemId(itemId: Long)
 }
