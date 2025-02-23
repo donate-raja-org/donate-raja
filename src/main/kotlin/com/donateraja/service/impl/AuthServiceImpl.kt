@@ -9,8 +9,10 @@ import com.donateraja.entity.constants.Role
 import com.donateraja.entity.user.Address
 import com.donateraja.entity.user.User
 import com.donateraja.entity.user.UserRole
+import com.donateraja.entity.wallet.Wallet
 import com.donateraja.repository.AddressRepository
 import com.donateraja.repository.UserRepository
+import com.donateraja.repository.WalletRepository
 import com.donateraja.service.AuthService
 import org.slf4j.MDC
 import org.springframework.http.HttpStatus
@@ -19,11 +21,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
 
 @Service
 class AuthServiceImpl(
     private val userRepository: UserRepository,
     private val addressRepository: AddressRepository,
+    private val walletRepository: WalletRepository,
     private val jwtUtil: JwtUtil,
     private val authenticationManager: AuthenticationManager
 ) : AuthService {
@@ -55,7 +59,9 @@ class AuthServiceImpl(
             }
 
             val savedUser = userRepository.save(user) // ✅ Save everything in one go
-
+            // ✅ Assign initial wallet with 300 points
+            val initialWallet = Wallet(user = savedUser, balance = BigDecimal(300))
+            walletRepository.save(initialWallet)
             val authentication = UsernamePasswordAuthenticationToken(user.email, user.password)
             val authResponse = jwtUtil.generateAccessToken(authentication)
             authResponse

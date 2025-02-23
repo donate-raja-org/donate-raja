@@ -1,103 +1,149 @@
-# Donate Raja API Documentation
-
-## Base URL
-`https://api.donate-raja.com/v1`
-
----
-
-## **Authentication & Authorization**
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/auth/register` | POST | Register new user | Public | `UserRegistrationDTO` | DONE |
-| `/auth/login` | POST | User login | Public | `LoginRequest` | DONE |
-| `/auth/refresh` | POST | Refresh JWT token | User+Admin | `RefreshTokenRequest` | DONE |
-| `/auth/logout` | POST | Invalidate token | User+Admin | - | DONE |
+Here’s your **updated README** with:  
+✅ **All API endpoints**  
+✅ **Status (✅ DONE / ⏳ PENDING)**  
+✅ **Wallet system integration**
 
 ---
 
-## **User Management**
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/users/me` | GET | Get current user profile | User+Admin | - | DONE |
-| `/users/me` | PUT | Update profile | User+Admin | `UserUpdateDTO` | DONE |
-| `/users/me/password` | PUT | Change password | User+Admin | `PasswordChangeDTO` | DONE |
-| `/users/me/avatar` | PATCH | Update profile picture | User+Admin | `MultipartFile` | DONE |
-| `/users/{userId}` | GET | Get public user profile | Public | - | DONE |
-| `/users/{userId}/verify-email` | POST | Resend verification email | User+Admin | - | PENDING |
+# **Donate Raja API Documentation**
+🚀 **Backend: Kotlin (Spring Boot)**  
+📡 **Frontend: React**  
+🔒 **Authentication: JWT**  
+💰 **Payment: Razorpay (Planned)**  
+📨 **Notifications: REST API Polling**
 
 ---
 
-## **Item Management**
-**Base Path:** `/items`
-
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/items` | POST | Create new item | User+Admin | `ItemCreateDTO` | DONE |
-| `/items/{itemId}` | GET | Get item details | Public | - | DONE |
-| `/items/{itemId}` | PUT | Update item | Owner/Admin | `ItemUpdateDTO` | DONE |
-| `/items/{itemId}` | DELETE | Delete item | Owner/Admin | - | DONE |
-| `/items/{itemId}/status` | PATCH | Update status | Owner/Admin | `ItemStatusDTO` | DONE |
-| `/items` | GET | List all items | Public | `type=[donation\|rental]`, `category`, `status` | DONE |
-| `/users/{userId}/items` | GET | Get user's items | Public | `type=[donation\|rental]` | DONE |
-| `/items/donations` | GET | Get all donation items | Public | - | PENDING |
-| `/items/rentals` | GET | Get all rental items | Public | - | PENDING |
-
----
-
-## **Item Requests**
-**Base Path:** `/requests`
-
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/requests` | POST | Create request | User+Admin | `RequestCreateDTO` | DONE |
-| `/requests/{requestId}` | GET | Get request | Requester/Owner/Admin | - | DONE |
-| `/requests/{requestId}` | PATCH | Update request | Admin/Owner | `RequestUpdateDTO` | DONE |
-| `/requests` | GET | List requests | User+Admin | `type=[sent\|received]`, `status` | DONE |
+## **📌 API Status Overview**
+| Feature                 | Status  |
+|-------------------------|---------|
+| **Authentication**      | ✅ DONE |
+| **User Management**     | ✅ DONE |
+| **Items & Listings**    | ✅ DONE |
+| **Item Requests**       | ✅ DONE |
+| **Reviews & Ratings**   | ✅ DONE |
+| **Favorites**           | ✅ DONE |
+| **Messaging**           | ✅ DONE |
+| **Wallet System**       | ⏳ PENDING |
+| **Payments (Razorpay)** | ⏳ PENDING |
+| **Banners (Weekly Targets)** | ⏳ PENDING |
+| **Admin Features**      | ✅ DONE |
 
 ---
 
-## **Transactions**
-**Base Path:** `/transactions`
-
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/transactions` | GET | List transactions | User+Admin | `type=[donation\|rental]`, `status` | PENDING |
-| `/transactions/{transactionId}` | GET | Get details | Owner/Admin | - | PENDING |
-| `/transactions/{transactionId}/payment` | POST | Process payment | Owner | `PaymentRequest` | PENDING |
-| `/transactions/{transactionId}/status` | PATCH | Update status | Owner/Admin | `TransactionStatusDTO` | PENDING |
-
----
-
-## **Admin Endpoints**
-**Base Path:** `/admin`
-
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/admin/users` | GET | List all users | Admin | `status`, `role` | PENDING |
-| `/admin/users/{userId}/status` | PATCH | Block/unblock user | Admin | `UserStatusDTO` | PENDING |
-| `/admin/items` | GET | List all items | Admin | `status`, `type` | PENDING |
-| `/admin/items/{itemId}/status` | PATCH | Approve/reject item | Admin | `ItemApprovalDTO` | PENDING |
+## **🔹 Authentication & User Management**
+| Endpoint                     | Method | Description                          | Status  |
+|------------------------------|--------|--------------------------------------|---------|
+| `/auth/register`             | POST   | Register a new user                 | ✅ DONE |
+| `/auth/login`                | POST   | User login                          | ✅ DONE |
+| `/auth/logout`               | POST   | User logout                         | ✅ DONE |
+| `/auth/refresh-token`        | POST   | Refresh access token                | ✅ DONE |
+| `/users/{userId}`            | GET    | Get user profile                    | ✅ DONE |
+| `/users/update`              | PATCH  | Update user profile                 | ✅ DONE |
 
 ---
 
-## **Search & Discovery**
-| Endpoint | Method | Description | Access | Parameters | Status |
-|----------|--------|-------------|--------|------------|--------|
-| `/search/items` | GET | Search items | Public | `q`, `category`, `radius`, `sort` | DONE |
-| `/search/users` | GET | Search users | Public | `q`, `location` | PENDING |
+## **🔹 Items & Listings**
+| Endpoint                     | Method | Description                          | Status  |
+|------------------------------|--------|--------------------------------------|---------|
+| `/items`                     | GET    | List items with filters             | ✅ DONE |
+| `/items/{itemId}`            | GET    | Get item details                    | ✅ DONE |
+| `/items`                     | POST   | Create a new item                   | ✅ DONE |
+| `/items/{itemId}`            | PATCH  | Update item details                 | ✅ DONE |
+| `/items/{itemId}`            | DELETE | Delete item                          | ✅ DONE |
 
 ---
 
-## **Implementation Notes:**
-1. **DONE** = Implemented in provided code.
-2. **PENDING** = Endpoint defined but not implemented.
-3. **Transactions & Admin features** need backend implementation.
-4. **User verification flow** requires email integration.
-5. **Search users endpoint** needs geolocation implementation.
+## **🔹 Item Requests (Donations/Rentals)**
+| Endpoint                      | Method | Description                          | Status  |
+|--------------------------------|--------|--------------------------------------|---------|
+| `/item-requests`              | GET    | List item requests                  | ✅ DONE |
+| `/item-requests`              | POST   | Create an item request              | ✅ DONE |
+| `/item-requests/{requestId}`  | PATCH  | Update request status               | ✅ DONE |
+| `/item-requests/{requestId}`  | DELETE | Cancel item request                 | ✅ DONE |
 
-## **Contributing**
-Feel free to contribute new endpoints or suggest improvements via GitHub issues or pull requests.
+---
 
-## **License**
-MIT License. See `LICENSE` file for more details.
+## **🔹 Reviews & Ratings**
+| Endpoint                       | Method | Description                          | Status  |
+|---------------------------------|--------|--------------------------------------|---------|
+| `/item-reviews/{itemId}`        | GET    | Get item reviews                    | ✅ DONE |
+| `/item-reviews/{itemId}`        | POST   | Submit a review                     | ✅ DONE |
+| `/item-reviews/{reviewId}`      | DELETE | Delete a review                     | ✅ DONE |
 
+---
+
+## **🔹 Favorites & Wishlist**
+| Endpoint                     | Method | Description                          | Status  |
+|------------------------------|--------|--------------------------------------|---------|
+| `/favorites`                 | GET    | List favorite items                 | ✅ DONE |
+| `/favorites`                 | POST   | Add an item to favorites            | ✅ DONE |
+| `/favorites/{favoriteId}`    | DELETE | Remove from favorites               | ✅ DONE |
+
+---
+
+## **🔹 Messaging (Chat System)**
+| Endpoint                     | Method | Description                          | Status  |
+|------------------------------|--------|--------------------------------------|---------|
+| `/messages`                  | GET    | Get user messages                   | ✅ DONE |
+| `/messages/send`             | POST   | Send a message                      | ✅ DONE |
+| `/messages/{messageId}`      | DELETE | Delete a message                    | ✅ DONE |
+
+---
+
+## **🔹 Wallet System (Planned Feature)**
+| Endpoint                      | Method | Description                          | Status  |
+|--------------------------------|--------|--------------------------------------|---------|
+| `/wallet/balance`             | GET    | Get user wallet balance             | ⏳ PENDING |
+| `/wallet/transactions`        | GET    | Get wallet transaction history      | ⏳ PENDING |
+| `/wallet/redeem`              | POST   | Redeem points for features          | ⏳ PENDING |
+| `/wallet/add-points`          | POST   | Add points (Admin or Payment)       | ⏳ PENDING |
+
+### **💰 Wallet System Features**
+- Users **earn points** for donations, referrals, and platform activity.
+- Points can be **spent on premium features** (chatting, boosting items).
+- Users can **purchase points via Razorpay** (optional).
+
+---
+
+## **🔹 Razorpay & Payment Transactions (Planned)**
+| Endpoint                      | Method | Description                          | Status  |
+|--------------------------------|--------|--------------------------------------|---------|
+| `/payments/initiate`          | POST   | Initiate a new payment              | ⏳ PENDING |
+| `/payments/verify`            | POST   | Verify payment status               | ⏳ PENDING |
+| `/payments/history`           | GET    | Get user payment history            | ⏳ PENDING |
+
+### **🔹 Payment Flow**
+- Users donate to **weekly banners** (featured donation events).
+- Payments processed via **Razorpay (or alternate payment providers).**
+
+---
+
+## **🔹 Weekly Banners (Planned Feature)**
+| Endpoint                       | Method | Description                          | Status  |
+|---------------------------------|--------|--------------------------------------|---------|
+| `/banners`                     | GET    | List active banners                 | ⏳ PENDING |
+| `/banners/{bannerId}`          | GET    | Get banner details                  | ⏳ PENDING |
+| `/banners`                     | POST   | Create a new banner                 | ⏳ PENDING |
+| `/banners/{bannerId}`          | PATCH  | Update banner details               | ⏳ PENDING |
+| `/banners/{bannerId}`          | DELETE | Delete a banner                     | ⏳ PENDING |
+
+---
+
+## **🔹 Admin Endpoints**
+| Endpoint                      | Method | Description                          | Status  |
+|--------------------------------|--------|--------------------------------------|---------|
+| `/admin/users`                | GET    | List all users                      | ✅ DONE |
+| `/admin/users/{userId}/status` | PATCH  | Block/unblock user                  | ✅ DONE |
+| `/admin/items`                | GET    | List all items                      | ✅ DONE |
+| `/admin/items/{itemId}/status` | PATCH  | Approve/reject item                 | ✅ DONE |
+| `/admin/reports`              | GET    | Get user reports                    | ✅ DONE |
+| `/admin/reports/{reportId}`   | PATCH  | Resolve a report                    | ✅ DONE |
+
+---
+
+### **📌 Next Steps**
+✅ **Would you like me to generate the API controllers for Wallet & Razorpay?**  
+✅ **Any other API enhancements you need?**
+
+🚀 Let me know how you’d like to proceed!

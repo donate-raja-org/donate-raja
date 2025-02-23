@@ -2,6 +2,7 @@ package com.donateraja.entity.user
 
 import com.donateraja.entity.constants.Gender
 import com.donateraja.entity.constants.UserStatus
+import com.donateraja.entity.wallet.Wallet
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonManagedReference
 import jakarta.persistence.CascadeType
@@ -14,6 +15,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotNull
@@ -100,7 +102,11 @@ class User(
 
     @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
     @JsonManagedReference
-    val roles: MutableSet<UserRole> = mutableSetOf()
+    val roles: MutableSet<UserRole> = mutableSetOf(),
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
+    var wallet: Wallet? = null
+
 ) : UserDetails {
 
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> =
