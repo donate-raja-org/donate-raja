@@ -1,4 +1,4 @@
-package com.donateraja.model.user
+package com.donateraja.domain.user
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

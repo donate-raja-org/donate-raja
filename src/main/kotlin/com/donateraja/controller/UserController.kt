@@ -2,9 +2,9 @@ package com.donateraja.controller
 
 import ApiOperationWithCustomResponses
 import com.donateraja.annotation.RequireUser
-import com.donateraja.model.user.ChangePasswordDto
-import com.donateraja.model.user.UserProfileDto
-import com.donateraja.model.user.UserRegistrationResponse
+import com.donateraja.domain.user.ChangePasswordDto
+import com.donateraja.domain.user.UserProfileDto
+import com.donateraja.domain.user.UserRegistrationResponse
 import com.donateraja.service.impl.UserServiceImpl
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus

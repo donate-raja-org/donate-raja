@@ -139,3 +139,104 @@ This document outlines all the essential API endpoints for the **Donate Raja** p
 This API structure supports the core operations of the Donate Raja platform, ensuring smooth interaction for users, admins, and the platform’s core features. If you need any more refinements
 
 or have specific implementation questions, feel free to ask!
+
+Let me clarify the difference between **`item_transactions`** and **`item_requests`**, along with their typical use cases and database schemas:
+
+---
+
+### **1. `item_requests` Table**
+**Purpose**:
+- Tracks **requests** from users to donate/rent an item (pre-transaction phase).
+- Manages the **request lifecycle** (pending → approved/rejected).
+
+**Schema Example**:
+```sql  
+CREATE TABLE item_requests (  
+    request_id BIGSERIAL PRIMARY KEY,  
+    item_id BIGINT NOT NULL REFERENCES items(item_id),  
+    requester_id BIGINT NOT NULL REFERENCES users(user_id),  
+    request_type VARCHAR(20) CHECK (request_type IN ('DONATION', 'RENTAL')),  
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),  
+    message TEXT,  
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    resolved_at TIMESTAMP  
+);  
+```
+
+**Use Cases**:
+- User A requests to rent User B’s item.
+- User C requests to donate an item to User D.
+
+---
+
+### **2. `item_transactions` Table**
+**Purpose**:
+- Records **completed exchanges** of items (post-request approval).
+- Tracks financials (for rentals) or ownership transfers (for donations).
+
+**Schema Example**:
+```sql  
+CREATE TABLE item_transactions (  
+    transaction_id BIGSERIAL PRIMARY KEY,  
+    request_id BIGINT REFERENCES item_requests(request_id), -- Optional link to original request  
+    item_id BIGINT NOT NULL REFERENCES items(item_id),  
+    from_user_id BIGINT NOT NULL REFERENCES users(user_id),  
+    to_user_id BIGINT NOT NULL REFERENCES users(user_id),  
+    transaction_type VARCHAR(20) CHECK (transaction_type IN ('DONATION', 'RENTAL')),  
+    amount DECIMAL(10,2), -- Rental fee (if applicable)  
+    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    status VARCHAR(20) CHECK (status IN ('COMPLETED', 'CANCELLED', 'REFUNDED'))  
+);  
+```
+
+**Use Cases**:
+- Finalized rental of an item (payment processed).
+- Completed donation transfer (ownership updated).
+
+---
+
+### **Key Differences**
+| Feature               | `item_requests`                          | `item_transactions`                     |  
+|-----------------------|------------------------------------------|-----------------------------------------|  
+| **Stage**             | Pre-transaction (negotiation phase)      | Post-approval (execution phase)         |  
+| **Statuses**          | Pending, Approved, Rejected              | Completed, Cancelled, Refunded          |  
+| **Financials**        | No monetary exchange                     | Tracks payments (for rentals)           |  
+| **Ownership**         | No ownership change                      | Updates item ownership                  |  
+| **Relationship**      | May lead to a transaction                | May reference a request (optional)      |  
+
+---
+
+### **Workflow Example**
+1. **Request Phase**:
+   - User creates an `item_requests` entry (e.g., "Request to rent Item X").
+   - Owner approves/rejects the request.
+
+2. **Transaction Phase** (if approved):
+   - System creates an `item_transactions` entry.
+   - For rentals: Processes payment via the `wallet_transactions` table.
+   - Updates item ownership (if donation).
+
+---
+
+### **When to Use Both**
+1. **Complex Workflows** (e.g., rentals requiring approval):
+   ```  
+   item_requests → item_transactions → wallet_transactions  
+   ```  
+
+2. **Audit Trail**:
+   - Keep requests for dispute resolution.
+   - Use transactions for financial reporting.
+
+3. **Cancel/Refund Scenarios**:
+   - Update `item_transactions.status` to `CANCELLED`/`REFUNDED` without deleting the request.
+
+---
+
+### **Simplified Implementation (If Needed)**
+If your use case is simple (e.g., instant donations with no approval step), you can merge both into a single `item_transactions` table with a `status` field. However, separate tables are better for:
+- Multi-step workflows
+- Tracking negotiations
+- Maintaining audit trails
+
+Let me know if you need help implementing either/both!

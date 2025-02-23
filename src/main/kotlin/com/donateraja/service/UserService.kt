@@ -1,8 +1,8 @@
 package com.donateraja.service
 
-import com.donateraja.model.user.ChangePasswordDto
-import com.donateraja.model.user.UserProfileDto
-import com.donateraja.model.user.UserRegistrationResponse
+import com.donateraja.domain.user.ChangePasswordDto
+import com.donateraja.domain.user.UserProfileDto
+import com.donateraja.domain.user.UserRegistrationResponse
 import org.springframework.web.multipart.MultipartFile
 
 interface UserService {

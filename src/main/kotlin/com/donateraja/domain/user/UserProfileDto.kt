@@ -1,6 +1,5 @@
-package com.donateraja.model.user
+package com.donateraja.domain.user
 
-import com.donateraja.domain.user.AddressResponseDTO
 import com.donateraja.entity.constants.Gender
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate

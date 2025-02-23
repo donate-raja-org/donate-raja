@@ -2,11 +2,11 @@ package com.donateraja.service.impl
 
 import com.donateraja.common.exception.ServiceException
 import com.donateraja.domain.user.AddressResponseDTO
+import com.donateraja.domain.user.ChangePasswordDto
+import com.donateraja.domain.user.UserProfileDto
+import com.donateraja.domain.user.UserRegistrationResponse
 import com.donateraja.entity.user.Address
 import com.donateraja.entity.user.User
-import com.donateraja.model.user.ChangePasswordDto
-import com.donateraja.model.user.UserProfileDto
-import com.donateraja.model.user.UserRegistrationResponse
 import com.donateraja.repository.AddressRepository
 import com.donateraja.repository.UserRepository
 import com.donateraja.service.UserService

@@ -42,3 +42,4 @@ build/*
 .gradle/
 out
 logs
+all_kotlin_code.txt

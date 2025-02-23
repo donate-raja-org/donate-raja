@@ -1,4 +1,4 @@
-package com.donateraja.model.user
+package com.donateraja.domain.user
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
