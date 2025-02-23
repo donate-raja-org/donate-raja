@@ -20,7 +20,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
-import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Entity
@@ -67,7 +67,7 @@ class User(
     var gender: Gender = Gender.PREFER_NOT_TO_SAY,
 
     @Column(name = "dob")
-    var dob: Instant? = null,
+    var dob: LocalDate? = null,
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -133,7 +133,7 @@ class User(
     constructor() : this(
         0, "", "", "", "",
         null, null, null, "",
-        Gender.PREFER_NOT_TO_SAY, Instant.now(), UserStatus.ACTIVE,
+        Gender.PREFER_NOT_TO_SAY, LocalDate.now(), UserStatus.ACTIVE,
         false, false, null,
         null, LocalDateTime.now(), LocalDateTime.now(), null
     )
