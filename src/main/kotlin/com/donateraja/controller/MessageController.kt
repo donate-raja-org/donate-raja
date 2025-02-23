@@ -5,6 +5,7 @@ import com.donateraja.annotation.RequireUser
 import com.donateraja.domain.message.MessageRequestDTO
 import com.donateraja.domain.message.MessageResponseDTO
 import com.donateraja.service.MessageService
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/messages")
+@Tag(name = "Messages", description = "APIs for user-to-user messaging")
 class MessageController(private val messageService: MessageService) {
 
     @PostMapping

@@ -2,6 +2,7 @@ package com.donateraja.controller
 
 import ApiOperationWithCustomResponses
 import com.donateraja.service.ImageService
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.MediaType
 import org.springframework.validation.annotation.Validated
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile
 @Validated
 @RestController
 @RequestMapping("/api/images")
+@Tag(name = "Images", description = "APIs for uploading and retrieving images")
 class ImageController(private val imageService: ImageService) {
 
     @PostMapping(

@@ -9,28 +9,23 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "item_reviews")
-class ItemReview(
+@Table(name = "favorites", uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "item_id"])])
+class Favorite(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
     @ManyToOne
-    @JoinColumn(name = "item_id", nullable = false)
-    var item: Item,
-
-    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     var user: User,
 
-    @Column(nullable = false)
-    var rating: Int,
-
-    @Column(columnDefinition = "TEXT")
-    var comment: String? = null,
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = false)
+    var item: Item,
 
     @Column(name = "created_at", updatable = false)
     var createdAt: LocalDateTime = LocalDateTime.now()

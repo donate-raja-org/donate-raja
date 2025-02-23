@@ -1,6 +1,10 @@
 package com.donateraja.entity.user
 
+import com.donateraja.entity.constants.ReportStatus
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -11,22 +15,26 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "user_reports")
-data class UserReport(
+class UserReport(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val reportId: Long? = null,
+    var id: Long = 0,
 
     @ManyToOne
-    @JoinColumn(name = "reported_user_id")
-    val reportedUser: User,
+    @JoinColumn(name = "reported_user_id", nullable = false)
+    var reportedUser: User,
 
     @ManyToOne
-    @JoinColumn(name = "reported_by_user_id")
-    val reportedByUser: User,
+    @JoinColumn(name = "reported_by_user_id", nullable = false)
+    var reportedByUser: User,
 
-    val reason: String,
+    @Column(nullable = false, columnDefinition = "TEXT")
+    var reason: String,
 
-    val status: String,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: ReportStatus = ReportStatus.PENDING,
 
-    val createdAt: LocalDateTime
+    @Column(name = "created_at", updatable = false)
+    var createdAt: LocalDateTime = LocalDateTime.now()
 )

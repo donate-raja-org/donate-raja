@@ -5,6 +5,7 @@ import com.donateraja.domain.request.ItemRequestCreateDTO
 import com.donateraja.domain.request.ItemRequestResponseDTO
 import com.donateraja.domain.request.ItemRequestStatusDTO
 import com.donateraja.service.ItemRequestService
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/requests")
+@Tag(name = "Item Requests", description = "APIs related to item donation/rental requests")
 class ItemRequestController(private val itemRequestService: ItemRequestService) {
 
     @PostMapping("/items")
